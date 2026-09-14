@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /lucidblocks/admin
+Disallow: /lucidblocks/login
+Disallow: /lucidblocks/my
+Disallow: /lucidblocks/notifications
+
+Sitemap: https://putzwirk.github.io/sitemap.xml
