@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Issue } from "../types";
 import { fetchMyIssues } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
 import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
+import { isPlainRowClick } from "../lib/rowClick";
 
 export default function MyReports() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function MyReports() {
       ) : (
         <ul className="issue-list">
           {issues.map((issue) => (
-            <li key={issue.id} className={`issue-row${issue.status === "closed" ? " issue-row-closed" : ""}`}>
+            <li key={issue.id} className={`issue-row issue-row-clickable${issue.status === "closed" ? " issue-row-closed" : ""}`} onClick={(event) => { if (isPlainRowClick(event)) navigate(`/lucidblocks/issues/${issue.id}`); }}>
               <div className="issue-row-content">
                 <div className="issue-row-head">
                   <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>

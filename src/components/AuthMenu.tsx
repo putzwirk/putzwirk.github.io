@@ -58,7 +58,7 @@ export default function AuthMenu() {
     return (
       <div className="auth-menu auth-menu-guest">
         <button className="btn btn-accent btn-sm auth-discord-btn" type="button" onClick={handleDiscord} disabled={busy}>
-          {busy ? "Opening…" : "Sign in with Discord"}
+          {busy ? "Opening…" : <><span className="auth-discord-full">Sign in with Discord</span><span className="auth-discord-short">Sign in</span></>}
         </button>
         {error && <span className="auth-error auth-error-floating" role="alert">{error}</span>}
       </div>

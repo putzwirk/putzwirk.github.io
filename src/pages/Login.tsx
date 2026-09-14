@@ -34,7 +34,7 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <h1>Admin Sign In</h1>
+      <h1>Admin sign in</h1>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Email</label>

@@ -497,7 +497,7 @@ h2 {
 
   .site-nav-guest {
     justify-content: center;
-    column-gap: 1.6rem;
+    column-gap: 1.1rem;
     font-size: 1rem;
   }
 
@@ -823,6 +823,14 @@ details[open] .chevron {
   font-size: 0.92rem;
 }
 
+.issue-row-clickable {
+  cursor: pointer;
+}
+
+.issue-row-clickable:hover {
+  border-color: var(--text-muted);
+}
+
 .issue-row-content {
   position: relative;
   z-index: 1;
@@ -1005,6 +1013,15 @@ details[open] .chevron {
   border-radius: var(--radius-sm);
   font-size: 0.9em;
   cursor: pointer;
+}
+
+.issue-reference:hover {
+  filter: brightness(1.15);
+}
+
+.issue-reference:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .mod-reference {
@@ -1653,8 +1670,8 @@ details[open] .chevron {
   position: relative;
 }
 
-.issue-reference-picker {
-  position: absolute !important;
+.form-group .issue-reference-picker {
+  position: absolute;
   top: calc(100% + 0.25rem);
   left: 0;
 }
@@ -2227,10 +2244,6 @@ details[open] .chevron {
     max-width: 7rem;
   }
 
-  .issue-reference-picker {
-    transform: translateY(4rem);
-  }
-
   .attachment-edit-thumb.attachment-drop-after::before {
     right: -0.2rem;
   }
@@ -2463,6 +2476,7 @@ details[open] .chevron {
 .event-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .event-row { display: flex; align-items: baseline; gap: 10px; color: var(--text-muted); font-size: 13px; }
 .event-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line-bold); flex: none; transform: translateY(-1px); }
+.event-toggle { margin-top: 10px; }
 .event-text { flex: 1; }
 .event-time { color: var(--text-faint); font-size: 12px; white-space: nowrap; }
 
@@ -3242,6 +3256,10 @@ input[type="checkbox"]:not([role="switch"]):disabled {
   gap: 0.6rem;
 }
 
+.auth-discord-short {
+  display: none;
+}
+
 .auth-staff-link {
   color: var(--text-muted);
   font-size: 0.82rem;
@@ -3353,9 +3371,9 @@ input[type="checkbox"]:not([role="switch"]):disabled {
 }
 
 .tab-count {
-  padding: 0.15rem 0.42rem;
-  font-size: 0.72rem;
-  color: var(--text-faint);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .comment-queue-toolbar {
@@ -3379,9 +3397,16 @@ input[type="checkbox"]:not([role="switch"]):disabled {
   }
 
   .auth-discord-btn {
-    font-size: 0.72rem;
-    padding: 0.28rem 0.5rem;
-    white-space: normal;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .auth-discord-full {
+    display: none;
+  }
+
+  .auth-discord-short {
+    display: inline;
   }
 
   .auth-staff-link {

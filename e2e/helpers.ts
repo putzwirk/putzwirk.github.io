@@ -12,7 +12,7 @@ export async function signInAsAdmin(page: Page): Promise<void> {
   await page.locator('input[type="email"]').fill(adminCredentials.email ?? "");
   await page.locator('input[type="password"]').fill(adminCredentials.password ?? "");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Manage Mods" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Manage mods" })).toBeVisible();
 }
 
 export async function openFirstMod(page: Page): Promise<void> {

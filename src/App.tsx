@@ -39,6 +39,11 @@ function ScrollToTop() {
   return null;
 }
 
+function LegacyRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/lucidblocks${location.pathname}${location.search}${location.hash}`} replace />;
+}
+
 function LucidLayout() {
   const location = useLocation();
   const { session, isStaff, signOut } = useAuth();
@@ -127,11 +132,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/lucidblocks/*" element={<LucidLayout />} />
-        <Route path="/ideas" element={<Navigate to="/lucidblocks/ideas" replace />} />
-        <Route path="/mods" element={<Navigate to="/lucidblocks/mods" replace />} />
-        <Route path="/mods/:modId" element={<Navigate to="/lucidblocks/mods" replace />} />
-        <Route path="/admin" element={<Navigate to="/lucidblocks/admin" replace />} />
-        <Route path="/login" element={<Navigate to="/lucidblocks/login" replace />} />
+        <Route path="/*" element={<LegacyRedirect />} />
       </Routes>
     </Suspense>
   );

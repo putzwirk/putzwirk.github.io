@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Issue, IssueComment, Mod } from "../types";
 import { fetchIdeas, fetchAllPublicIssues, fetchModsWithVersions, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent, fetchComments, createComment, subscribeToIssue } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +12,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import IssueEditForm from "../components/IssueEditForm";
 import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
+import { isPlainRowClick } from "../lib/rowClick";
 import { centerAfterRender } from "../lib/centerScroll";
 
 function commentLabel(idea: Issue) {
@@ -40,6 +41,7 @@ export default function Ideas() {
   const commentSubsRef = useRef(new Map<string, () => void>());
   const commentReqRef = useRef<Record<string, number>>({});
   const { isStaff } = useAuth();
+  const navigate = useNavigate();
   const ideaFormRef = useRef<HTMLDivElement>(null);
   const openIdeas = useMemo(() => ideas.filter((idea) => idea.status === "open"), [ideas]);
   const closedIdeas = useMemo(() => ideas.filter((idea) => idea.status === "closed"), [ideas]);
@@ -162,7 +164,7 @@ export default function Ideas() {
         ) : (
           <ul className="issue-list">
             {visibleIdeas.map((idea) => (
-              <li id={`issue-${idea.id}`} key={idea.id} className={`issue-row ${idea.status === "closed" ? "issue-row-closed" : ""}`}>
+              <li id={`issue-${idea.id}`} key={idea.id} className={`issue-row issue-row-clickable ${idea.status === "closed" ? "issue-row-closed" : ""}`} onClick={(event) => { if (isPlainRowClick(event)) navigate(`/lucidblocks/issues/${idea.id}`); }}>
                 <div className="issue-row-content">
                   <div className="issue-row-head">
                     <span className={`type-badge ${idea.type === "bug" ? "type-bug" : "type-feature"}`}>{idea.type === "bug" ? "Bug" : "Feature"}</span>
@@ -189,7 +191,7 @@ export default function Ideas() {
                         <button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingAdmin(idea)}>Delete</button>
                       </div>
                     )}
-                    {idea.moderation_status === "pending" && <div className="issue-actions"><button className="btn btn-sm issue-action-btn" onClick={() => setEditingLocal(idea)}>Edit</button><button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingLocal(idea)}>Remove</button></div>}
+                    {!isStaff && idea.moderation_status === "pending" && <div className="issue-actions"><button className="btn btn-sm issue-action-btn" onClick={() => setEditingLocal(idea)}>Edit</button><button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingLocal(idea)}>Remove</button></div>}
                   </div>
                   {openComments.has(idea.id) && (
                     <div className="issue-comments" id={`issue-comments-${idea.id}`} role="region" aria-label={`Comments on "${idea.title}"`}>
@@ -224,7 +226,7 @@ export default function Ideas() {
       </section>
       {deletingAdmin && <ConfirmDialog title="Delete idea?" message={`Delete "${deletingAdmin.title}" permanently?`} onCancel={() => setDeletingAdmin(null)} onConfirm={async () => { const target = deletingAdmin; await deleteIssue(target.id); setIdeas((items) => items.filter((item) => item.id !== target.id)); setDeletingAdmin(null); }} />}
       {editingAdmin && <IssueEditForm heading="Edit idea" issue={editingAdmin} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingAdmin.id, title, description, attachmentUrls, newAttachments); setIdeas((items) => items.map((item) => item.id === editingAdmin.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingAdmin(null); }} onCancel={() => setEditingAdmin(null)} />}
-      {deletingLocal && <ConfirmDialog title="Remove idea submission?" message="This pending idea will be permanently removed." onCancel={() => setDeletingLocal(null)} onConfirm={async () => { const target = deletingLocal; await softDeleteIssue(target.id); setIdeas((items) => items.filter((item) => item.id !== target.id)); setDeletingLocal(null); }} />}
+      {deletingLocal && <ConfirmDialog title="Remove submission?" message="This pending idea will be permanently removed." onCancel={() => setDeletingLocal(null)} onConfirm={async () => { const target = deletingLocal; await softDeleteIssue(target.id); setIdeas((items) => items.filter((item) => item.id !== target.id)); setDeletingLocal(null); }} />}
       {editingLocal && <IssueEditForm issue={editingLocal} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingLocal.id, title, description, attachmentUrls, newAttachments); setIdeas((items) => items.map((item) => item.id === editingLocal.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingLocal(null); }} onCancel={() => setEditingLocal(null)} />}
     </>
   );

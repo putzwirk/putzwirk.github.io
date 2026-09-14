@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import type { Mod, ModWithVersions, Issue } from "../types";
 import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, getModAssetUrl, registerDownload, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
 import type { ModMedia } from "../lib/data";
@@ -12,6 +12,7 @@ import ModGallery from "../components/ModGallery";
 
 export default function ModDetail() {
   const { modId } = useParams<{ modId: string }>();
+  const location = useLocation();
   const [mod, setMod] = useState<ModWithVersions | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [referenceIssues, setReferenceIssues] = useState<Issue[]>([]);
@@ -60,10 +61,22 @@ export default function ModDetail() {
 
   if (loading) return <p className="load-state">Loading</p>;
   if (error) return <div className="error-state">Couldn't load this mod. {error}</div>;
-  if (!mod) return <p className="empty-state">Mod not found.</p>;
+  if (!mod) {
+    return (
+      <>
+        <Link className="back-link" to="/lucidblocks/mods">← Mods</Link>
+        <p className="empty-state">Mod not found.</p>
+      </>
+    );
+  }
 
   const media = mod as ModWithVersions & ModMedia;
   const latest = mod.mod_versions[0];
+  const fromPath = (location.state as { from?: string } | null)?.from ?? null;
+  const fromModId = fromPath?.match(/^\/lucidblocks\/mods\/([^/]+)/)?.[1] ?? null;
+  const fromMod = fromModId && fromModId !== mod.id ? mods.find((item) => item.id === fromModId) : undefined;
+  const backHref = fromMod ? `/lucidblocks/mods/${fromMod.id}` : "/lucidblocks/mods";
+  const backLabel = fromMod ? `← ${fromMod.name}` : "← Mods";
   const openIssues = issues.filter((item) => item.status === "open");
   const closedIssues = issues.filter((item) => item.status === "closed");
   const visibleIssues = issueTab === "open" ? openIssues : closedIssues;
@@ -76,7 +89,7 @@ export default function ModDetail() {
 
   return (
     <>
-      <Link className="back-link" to="/lucidblocks/mods">← Mods</Link>
+      <Link className="back-link" to={backHref}>{backLabel}</Link>
       {media.banner_path && <img className="mod-banner" src={getModAssetUrl(media.banner_path)} alt={`${mod.name} banner`} />}
       <div className="mod-head">
         <span className="slot-glyph">{mod.name.charAt(0)}</span>

@@ -335,8 +335,8 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
   return (
     <>
       <div className="section-head admin-manage-head">
-        <h1>{submissionsPage ? "Submissions" : commentsPage ? "Comments" : "Manage Mods"}</h1>
-        {managementPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add Mod</button>}
+        <h1>{submissionsPage ? "Submissions" : commentsPage ? "Comments" : "Manage mods"}</h1>
+        {managementPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add mod</button>}
       </div>
       <nav className="staff-view-nav" aria-label="Moderation views">
         <Link to="/lucidblocks/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
@@ -547,7 +547,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
               </div>
               <div className="admin-controls">
                 <button className="btn btn-sm" onClick={() => { setEditingMod(mod); setShowModForm(true); }}>Edit</button>
-                <button className="btn btn-accent btn-sm" onClick={() => { setEditingVersion(null); setVersionTarget(mod.id); }}>Add Version</button>
+                <button className="btn btn-accent btn-sm" onClick={() => { setEditingVersion(null); setVersionTarget(mod.id); }}>Add version</button>
                 <button className="btn btn-sm" onClick={() => setDeletingMod(mod)}>Delete</button>
               </div>
               {mod.mod_versions.length > 0 && (

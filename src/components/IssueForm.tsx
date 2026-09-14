@@ -20,13 +20,13 @@ const LABELS = {
     title: "What's broken",
     titlePlaceholder: "What's broken?",
     descriptionPlaceholder: "Steps to reproduce, what you expected, what happened",
-    submit: "Submit Issue",
+    submit: "Submit issue",
   },
   idea: {
-    title: "Suggest feature description",
-    titlePlaceholder: "What would you like to see?",
+    title: "What would you like to see?",
+    titlePlaceholder: "Short summary of your idea",
     descriptionPlaceholder: "Describe the mod you'd like to see in more detail",
-    submit: "Submit Idea",
+    submit: "Submit idea",
   },
 };
 
@@ -244,7 +244,7 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
         {attachments.length > 0 && <small>{attachments.length} file{attachments.length === 1 ? "" : "s"} selected (images, GIFs, videos) · 2 MB each, 10 MB total maximum</small>}
       </div>
       <div className="form-group">
-        <label>Your Name (optional)</label>
+        <label>Your name (optional)</label>
         <input
           className="form-input"
           value={author}

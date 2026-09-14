@@ -31,6 +31,7 @@ export default function IssueDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   const load = useCallback(async () => {
     if (!issueId) return;
@@ -62,13 +63,21 @@ export default function IssueDetail() {
 
   if (loading) return <p className="load-state">Loading</p>;
   if (error) return <div className="error-state">Couldn't load this issue. {error}</div>;
-  if (!detail) return <p className="empty-state">Issue not found, or it is still awaiting moderation.</p>;
+  if (!detail) {
+    return (
+      <>
+        <Link className="back-link" to="/lucidblocks/mods">← Mods</Link>
+        <p className="empty-state">Issue not found, or it is still awaiting moderation.</p>
+      </>
+    );
+  }
 
   const { issue, modName } = detail;
   const isIdea = issue.type === "idea";
   const voted = votedIds.has(issue.id);
   const backHref = issue.mod_id ? `/lucidblocks/mods/${issue.mod_id}` : "/lucidblocks/ideas";
   const backLabel = issue.mod_id ? `← ${modName ?? "Mod"}` : "← Ideas";
+  const commentCount = issue.comment_count ?? comments.filter((comment) => comment.moderation_status === "approved").length;
 
   const handleVote = async () => {
     try {
@@ -103,7 +112,7 @@ export default function IssueDetail() {
           <span>by {issue.author_name}</span>
           <span>{formatDateTime(issue.created_at)}</span>
           {modName && <span className="chip">{modName}</span>}
-          <span>{issue.comment_count ?? comments.filter((c) => c.moderation_status === "approved").length} comment{(issue.comment_count ?? 0) === 1 ? "" : "s"}</span>
+          <span>{commentCount} comment{commentCount === 1 ? "" : "s"}</span>
           {isIdea && issue.status === "open" && (
             <button className={`vote-btn ${voted ? "voted" : ""}`} type="button" onClick={handleVote}>↑ {issue.votes} {voted ? "voted" : "vote"}</button>
           )}
@@ -142,7 +151,7 @@ export default function IssueDetail() {
         <section className="issue-timeline">
           <h2>Activity</h2>
           <ul className="event-list">
-            {events.map((event) => (
+            {(showAllEvents ? events : events.slice(-3)).map((event) => (
               <li key={event.id} className="event-row">
                 <span className="event-dot" aria-hidden="true" />
                 <span className="event-text">
@@ -155,6 +164,11 @@ export default function IssueDetail() {
               </li>
             ))}
           </ul>
+          {events.length > 3 && (
+            <button className="btn btn-sm issue-action-btn event-toggle" type="button" onClick={() => setShowAllEvents((value) => !value)}>
+              {showAllEvents ? "Show less" : `Show all ${events.length}`}
+            </button>
+          )}
         </section>
       )}
 

@@ -103,7 +103,7 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
   };
   return (
     <form className="panel" onSubmit={handleSubmit}>
-      <h2>{mod ? "Edit Mod" : "New Mod"}</h2>
+      <h2>{mod ? "Edit mod" : "New mod"}</h2>
       <div className="form-row">
         <div className="form-group">
           <label>Mod ID (slug)</label>
@@ -146,11 +146,11 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label>Issue Label</label>
+          <label>Issue label</label>
           <input className="form-input" value={issueLabel} onChange={(e) => setIssueLabel(e.target.value)} placeholder="legacy label slug" />
         </div>
         <div className="form-group">
-          <label>Sort Order</label>
+          <label>Sort order</label>
           <input className="form-input" type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Issue } from "../types";
 import AttachmentGallery from "./AttachmentGallery";
 import MarkdownText from "./MarkdownText";
 import IssueEditForm from "./IssueEditForm";
 import IssueStateBadge from "./IssueStateBadge";
 import { softDeleteIssue, updateIssueContent } from "../lib/data";
+import { isPlainRowClick } from "../lib/rowClick";
 import ConfirmDialog from "./ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
 
@@ -20,6 +21,7 @@ interface Props {
 
 export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, onEdit, emptyMessage = "No issues reported for this mod yet." }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
   const [editingLocal, setEditingLocal] = useState<Issue | null>(null);
   const [deletingLocal, setDeletingLocal] = useState<Issue | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Issue | null>(null);
@@ -36,7 +38,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
           const isLocal = issue.moderation_status === "pending";
           const hasDetails = Boolean(issue.description?.trim()) || (issue.attachment_urls?.length ?? 0) > 0;
           return (
-            <li id={`issue-${issue.id}`} key={issue.id} className={`issue-row ${issue.status === "closed" ? "issue-row-closed" : ""}`}>
+            <li id={`issue-${issue.id}`} key={issue.id} className={`issue-row issue-row-clickable ${issue.status === "closed" ? "issue-row-closed" : ""}`} onClick={(event) => { if (isPlainRowClick(event)) navigate(`/lucidblocks/issues/${issue.id}`); }}>
               <div className="issue-row-content">
                 <div className="issue-row-head">
                   <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>
@@ -52,9 +54,9 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
                   <Link className="issue-comment-link" to={`/lucidblocks/issues/${issue.id}`}>{(issue.comment_count ?? 0) > 0 ? `${issue.comment_count} comment${issue.comment_count === 1 ? "" : "s"}` : "Comment"}</Link>
                   {(isAdmin || isLocal) && (
                     <div className="issue-actions">
-                      {isLocal && <>
+                      {isLocal && !isAdmin && <>
                         <button className="btn btn-sm issue-action-btn" onClick={() => setEditingLocal(issue)}>Edit</button>
-                        <button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingLocal(issue)}>Delete</button></>}
+                        <button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingLocal(issue)}>Remove</button></>}
                       {isAdmin && !isLocal && <button className="btn btn-sm issue-action-btn" onClick={() => setEditingAdmin(issue)}>Edit</button>}
                       {isAdmin && issue.status === "open" && (
                         <button className="btn btn-sm issue-action-btn" onClick={() => onStatusChange(issue.id, "closed")}>Close</button>
@@ -73,7 +75,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
           );
         })}
       </ul>
-      {deletingLocal && <ConfirmDialog title="Delete submission?" message="This pending submission will be permanently removed." onCancel={() => setDeletingLocal(null)} onConfirm={async () => { const target = deletingLocal; await softDeleteIssue(target.id); setDeletingLocal(null); await onEdit?.(target.id); }} />}
+      {deletingLocal && <ConfirmDialog title="Remove submission?" message="This pending submission will be permanently removed." onCancel={() => setDeletingLocal(null)} onConfirm={async () => { const target = deletingLocal; await softDeleteIssue(target.id); setDeletingLocal(null); await onEdit?.(target.id); }} />}
       {editingLocal && <IssueEditForm issue={editingLocal} onSubmit={async (title, description, attachmentUrls, newAttachments) => { await updateIssueContent(editingLocal.id, title, description, attachmentUrls, newAttachments); setEditingLocal(null); await onEdit?.(editingLocal.id); }} onCancel={() => setEditingLocal(null)} />}
       {deletingAdmin && <ConfirmDialog title="Delete issue?" message={`Delete "${deletingAdmin.title}" permanently?`} onCancel={() => setDeletingAdmin(null)} onConfirm={async () => { const target = deletingAdmin; await onDelete?.(target.id); setDeletingAdmin(null); }} />}
       {editingAdmin && <IssueEditForm heading="Edit issue" issue={editingAdmin} onSubmit={async (title, description, attachmentUrls, newAttachments) => { await updateIssueContent(editingAdmin.id, title, description, attachmentUrls, newAttachments); setEditingAdmin(null); await onEdit?.(editingAdmin.id); }} onCancel={() => setEditingAdmin(null)} />}

@@ -139,18 +139,18 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
 
   return (
     <form className="panel" onSubmit={handleSubmit}>
-      <h2>{isEdit ? `Edit v${initial?.version}` : "New Version"}</h2>
+      <h2>{isEdit ? `Edit v${initial?.version}` : "New version"}</h2>
       <div className="form-row">
         <div className="form-group">
-          <label>Mod Version</label>
+          <label>Mod version</label>
           <input className="form-input" value={version} onChange={(e) => setVersion(e.target.value)} required placeholder="e.g. 4.1.0" />
         </div>
         <div className="form-group">
-          <label>Game Version</label>
+          <label>Game version</label>
           <input className="form-input" value={gameVersion} onChange={(e) => setGameVersion(e.target.value)} required placeholder="e.g. 4.0.1" />
         </div>
         <div className="form-group">
-          <label>Release Date</label>
+          <label>Release date</label>
           <input className="form-input" type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} required />
         </div>
       </div>
@@ -187,12 +187,12 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
         </textarea>{pickerVisible && <div className="reference-picker" style={{ left: referencePosition.left, top: referencePosition.top }}>{referenceOptions.map((reference) => <button type="button" className="reference-picker-item" key={reference.id} onMouseDown={(event) => event.preventDefault()} onClick={() => { const textarea = changelogRef.current; if (!textarea) return; const cursor = textarea.selectionStart; const before = changelog.slice(0, cursor); const marker = before.lastIndexOf("[["); const nextValue = `${changelog.slice(0, marker)}[[${reference.id}]]${changelog.slice(cursor)}`; setChangelog(nextValue); setReferenceQuery(null); requestAnimationFrame(() => { const nextCursor = marker + reference.id.length + 4; textarea.focus(); textarea.setSelectionRange(nextCursor, nextCursor); }); }}>{reference.kind !== "mod" && <span className="reference-picker-mod">{reference.detail}</span>}<span className={`reference-picker-kind reference-picker-kind-kind-${reference.kind}`}>{reference.kindLabel}</span><span className="reference-picker-title">{reference.title}</span></button>)}</div>}</div>
       </div>
       <div className="form-group">
-        <label>{isEdit ? `.pck File (current: ${initial?.pck_filename} — leave empty to keep)` : ".pck File"}</label>
+        <label>{isEdit ? `.pck file (current: ${initial?.pck_filename} — leave empty to keep)` : ".pck file"}</label>
         <input className="form-input" type="file" accept=".pck" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required={!isEdit} />
       </div>
       {error && <p className="form-error">{error}</p>}
       <div className="form-actions">
-        <button className="btn btn-accent" type="submit" disabled={submitting}>{submitting ? (isEdit ? "Saving…" : "Uploading…") : (isEdit ? "Save Changes" : "Upload Version")}</button>
+        <button className="btn btn-accent" type="submit" disabled={submitting}>{submitting ? (isEdit ? "Saving…" : "Uploading…") : (isEdit ? "Save changes" : "Upload version")}</button>
         <button className="btn" type="button" onClick={onCancel}>Cancel</button>
       </div>
     </form>

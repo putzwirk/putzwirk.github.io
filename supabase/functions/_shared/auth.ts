@@ -5,6 +5,15 @@ export interface Actor {
   isAnonymous: boolean;
   isStaff: boolean;
   email: string | null;
+  displayName: string | null;
+}
+
+function displayNameFromMetadata(metadata: Record<string, unknown>): string | null {
+  const custom = (metadata.custom_claims ?? {}) as Record<string, unknown>;
+  for (const candidate of [metadata.global_name, custom.global_name, metadata.full_name, metadata.user_name, metadata.name]) {
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  }
+  return null;
 }
 
 export async function getActor(service: SupabaseClient, req: Request): Promise<Actor | null> {
@@ -20,11 +29,11 @@ export async function getActor(service: SupabaseClient, req: Request): Promise<A
     isAnonymous: Boolean(data.user.is_anonymous),
     isStaff: role === "admin" || role === "moderator",
     email: data.user.email ?? null,
+    displayName: displayNameFromMetadata((data.user.user_metadata ?? {}) as Record<string, unknown>),
   };
 }
 
 export function defaultAuthorName(actor: Actor | null): string {
   if (!actor) return "Anonymous";
-  if (actor.email) return actor.email.split("@")[0].slice(0, 40);
-  return "Anonymous";
+  return actor.displayName?.slice(0, 40) || "Anonymous";
 }

@@ -13,7 +13,7 @@ test.describe.serial("issue moderation and discussion", () => {
     await page.getByRole("button", { name: "Report an issue" }).click();
     await page.getByLabel("What's broken").fill(issueTitle);
     await page.getByLabel("Description (optional)").fill("Submitted by the E2E suite.");
-    await page.getByRole("button", { name: "Submit Issue" }).click();
+    await page.getByRole("button", { name: "Submit issue" }).click();
 
     const issueLink = page.getByRole("link", { name: issueTitle });
     await expect(issueLink).toBeVisible();

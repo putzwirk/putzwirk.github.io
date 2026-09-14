@@ -4,6 +4,7 @@ export interface ActorUser {
   id: string;
   is_anonymous?: boolean;
   app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
   email?: string | null;
 }
 
