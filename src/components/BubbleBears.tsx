@@ -73,6 +73,8 @@ const LEG_GAP = 4;
 const LEG_SWING = 0.07;
 const LEG_WAVE_SPEED = 9;
 const HAIR_EXTEND = 8;
+const REPAINT_PAD = 2;
+const REPAINT_GAP = 0.25;
 
 let unitDpr = 1;
 let offscreen = OFFSCREEN;
@@ -1358,9 +1360,10 @@ export default function BubbleBears() {
 
     const step = (now: number) => {
       if (disposed) return;
-      let dt = (now - last) / 1000;
+      const elapsed = (now - last) / 1000;
+      if (elapsed > REPAINT_GAP) fullClear = true;
+      let dt = elapsed > 0.05 ? 0.05 : elapsed;
       last = now;
-      if (dt > 0.05) dt = 0.05;
       tuneQuality(dt);
 
       const active = bears.length > 1;
@@ -1426,6 +1429,7 @@ export default function BubbleBears() {
       raf = requestAnimationFrame(step);
     };
 
+    let fullClear = true;
     let prevMinX = 0;
     let prevMinY = 0;
     let prevMaxX = 0;
@@ -1517,7 +1521,7 @@ export default function BubbleBears() {
         bMinY = Infinity;
         bMaxX = -Infinity;
         bMaxY = -Infinity;
-        const pad = b.sp.legs ? LEG_SWING * geo.legH + 1 : 0;
+        const pad = (b.sp.legs ? LEG_SWING * geo.legH : 0) + REPAINT_PAD;
         addQuad(ta, tb, tc, td, te, tf, -geo.halfW - pad, geo.halfW + pad, geo.bodyDrawY - pad, geo.bodyDrawY + geo.bodyH + pad);
 
         if (b.sp.hair) {
@@ -1544,7 +1548,7 @@ export default function BubbleBears() {
           b.md = md;
           b.me = me;
           b.mf = mf;
-          addQuad(ma, mb, mc, md, me, mf, -geo.halfW, geo.halfW, -geo.bodyTop, HAIR_EXTEND);
+          addQuad(ma, mb, mc, md, me, mf, -geo.halfW - pad, geo.halfW + pad, -geo.bodyTop - pad, HAIR_EXTEND + pad);
         }
 
         if (bMinX < minX) minX = bMinX;
@@ -1558,7 +1562,10 @@ export default function BubbleBears() {
       const clearMaxX = Math.min(canvas.width, Math.max(maxX, prevMaxX));
       const clearMaxY = Math.min(canvas.height, Math.max(maxY, prevMaxY));
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      if (clearMaxX > clearMinX && clearMaxY > clearMinY) {
+      if (fullClear) {
+        fullClear = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      } else if (clearMaxX > clearMinX && clearMaxY > clearMinY) {
         ctx.clearRect(clearMinX, clearMinY, clearMaxX - clearMinX, clearMaxY - clearMinY);
       }
       prevMinX = minX;

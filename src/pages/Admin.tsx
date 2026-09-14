@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { ModWithVersions, ModVersion } from "../types";
-import { fetchModsWithVersions, createMod, updateMod, deleteMod, createVersion, updateVersion, deleteVersion, fetchPendingIssues, moderateIssue, deleteIssue, updateIssueContent } from "../lib/data";
+import { fetchModsWithVersions, createMod, updateMod, deleteMod, createVersion, updateVersion, deleteVersion, fetchPendingIssues, moderateIssue, updateIssueContent } from "../lib/data";
 import type { Issue } from "../types";
 import ModForm from "../components/ModForm";
 import VersionForm from "../components/VersionForm";
@@ -11,11 +11,10 @@ import MarkdownText from "../components/MarkdownText";
 import IssueEditForm from "../components/IssueEditForm";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
-import { removePendingIssue, mergeWithPending } from "../lib/pendingIssues";
 import { centerAfterRender } from "../lib/centerScroll";
 
 export default function Admin({ submissionsOnly = false }: { submissionsOnly?: boolean }) {
-  const { session, loading: authLoading } = useAuth();
+  const { isStaff, loading: authLoading } = useAuth();
   const location = useLocation();
   const submissionsPage = submissionsOnly || location.pathname.endsWith("/submissions");
   const [mods, setMods] = useState<ModWithVersions[]>([]);
@@ -40,11 +39,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
     if (versionTarget || editingVersion) centerAfterRender(versionFormRef);
   }, [versionTarget, editingVersion]);
 
-  useEffect(() => { if (session) { loadMods(); fetchPendingIssues().then((items) => { setPendingIssues(mergeWithPending(items)); }).catch((e) => setError(e.message)); } }, [session]);
-
-  const removeCachedIssue = (issue: Issue) => {
-    removePendingIssue(issue.id);
-  };
+  useEffect(() => { if (isStaff) { loadMods(); fetchPendingIssues().then(setPendingIssues).catch((e) => setError(e.message)); } }, [isStaff]);
 
   const loadMods = () => {
     setLoading(true);
@@ -52,7 +47,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   };
 
   if (authLoading) return <p className="load-state">Loading</p>;
-  if (!session) return <Navigate to="/lucidblocks/login" replace />;
+  if (!isStaff) return <Navigate to="/lucidblocks/login" replace />;
 
   return (
     <>
@@ -61,7 +56,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
         {!submissionsPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add Mod</button>}
       </div>
       {error && <div className="error-state">{error}</div>}
-      {submissionsPage && <section className="moderation-panel">{pendingIssues.map((issue) => <article className="moderation-item" key={issue.id}><div className="issue-row-content"><div className="issue-row-title">{issue.title}</div><div className="issue-row-desc"><MarkdownText text={issue.description} issues={pendingIssues} mods={mods} /></div><div className="issue-row-meta"><span>{issue.type}</span><span>by {issue.author_name}</span><span>{formatDateTime(issue.created_at)}</span></div>{issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}</div><div className="admin-controls"><button className="btn btn-sm" onClick={() => setEditingIssue(issue)}>Edit</button><button className="btn btn-accent btn-sm" onClick={async () => { await moderateIssue(issue.id, "approved"); removeCachedIssue(issue); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Approve</button><button className="btn btn-sm" onClick={async () => { await deleteIssue(issue.id); removeCachedIssue(issue); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Reject</button></div></article>)}</section>}
+      {submissionsPage && <section className="moderation-panel">{pendingIssues.map((issue) => <article className="moderation-item" key={issue.id}><div className="issue-row-content"><div className="issue-row-title">{issue.title}</div><div className="issue-row-desc"><MarkdownText text={issue.description} issues={pendingIssues} mods={mods} /></div><div className="issue-row-meta"><span>{issue.type}</span><span>by {issue.author_name}</span><span>{formatDateTime(issue.created_at)}</span></div>{issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}</div><div className="admin-controls"><button className="btn btn-sm" onClick={() => setEditingIssue(issue)}>Edit</button><button className="btn btn-accent btn-sm" onClick={async () => { await moderateIssue(issue.id, "approved"); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Approve</button><button className="btn btn-sm" onClick={async () => { await moderateIssue(issue.id, "rejected"); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Reject</button></div></article>)}</section>}
       {editingIssue && <IssueEditForm issue={editingIssue} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingIssue.id, title, description, attachmentUrls, newAttachments); setPendingIssues((items) => items.map((item) => item.id === editingIssue.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingIssue(null); }} onCancel={() => setEditingIssue(null)} />}
       {!submissionsPage && <>
       {showModForm && (

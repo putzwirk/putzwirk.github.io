@@ -1,9 +1,8 @@
 import { supabase, STORAGE_BUCKET } from "./supabase";
 import type { Mod, ModVersion, Issue, ModWithVersions } from "../types";
-import { loadPendingIssues, savePendingIssues, addPendingIssue } from "./pendingIssues";
 import { uploadIssueAttachments } from "./issueAttachments";
-
-// ---------- Mods ----------
+import { invokeOrThrow } from "./functions";
+import { ensureSession } from "./session";
 
 export async function fetchModsWithVersions(): Promise<ModWithVersions[]> {
   const { data, error } = await supabase
@@ -51,9 +50,7 @@ export async function updateMod(id: string, updates: Partial<Mod>): Promise<void
 }
 
 export async function deleteMod(id: string): Promise<void> {
-  const { data: files, error: listError } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .list(id);
+  const { data: files, error: listError } = await supabase.storage.from(STORAGE_BUCKET).list(id);
   if (listError) throw listError;
 
   if (files && files.length > 0) {
@@ -65,8 +62,6 @@ export async function deleteMod(id: string): Promise<void> {
   const { error } = await supabase.from("mods").delete().eq("id", id);
   if (error) throw error;
 }
-
-// ---------- Versions ----------
 
 export async function createVersion(
   version: Omit<ModVersion, "id" | "created_at" | "storage_path" | "download_count">,
@@ -124,26 +119,17 @@ export function getDownloadUrl(storagePath: string): string {
   return data.publicUrl;
 }
 
-export async function incrementVersionDownloads(versionId: string): Promise<void> {
-  const { error } = await supabase.rpc("increment_version_downloads", { version_id: versionId });
-  if (error) throw error;
-}
-
-// ---------- Issues ----------
-
-async function syncPendingCache(): Promise<Issue[]> {
-  const cached = loadPendingIssues();
-  if (!cached.length) return cached;
-  const { data, error } = await supabase.from("issues").select("id, moderation_status").in("id", cached.map((issue) => issue.id));
-  if (error) return cached;
-  const statuses = new Map((data ?? []).map((item) => [item.id, item.moderation_status]));
-  const remaining = cached.filter((issue) => statuses.get(issue.id) === "pending");
-  savePendingIssues(remaining);
-  return remaining;
+export async function registerDownload(versionId: string): Promise<boolean> {
+  try {
+    const result = await invokeOrThrow<{ url: string; counted: boolean }>("download", { version_id: versionId });
+    return Boolean(result?.counted);
+  } catch {
+    return false;
+  }
 }
 
 export async function fetchAllPublicIssues(): Promise<Issue[]> {
-  const { data, error } = await supabase.from("issues").select("*").eq("moderation_status", "approved").order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("issues").select("*").is("deleted_at", null).order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Issue[];
 }
@@ -153,12 +139,11 @@ export async function fetchIssuesByMod(modId: string): Promise<Issue[]> {
     .from("issues")
     .select("*")
     .eq("mod_id", modId)
-    .eq("moderation_status", "approved")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  const cached = await syncPendingCache();
-  return [...cached.filter((issue) => issue.mod_id === modId), ...(data as Issue[])];
+  return (data ?? []) as Issue[];
 }
 
 export async function fetchIdeas(): Promise<Issue[]> {
@@ -166,14 +151,12 @@ export async function fetchIdeas(): Promise<Issue[]> {
     .from("issues")
     .select("*")
     .eq("type", "idea")
-    .is("mod_id", null)
-    .eq("moderation_status", "approved")
+    .is("deleted_at", null)
     .order("votes", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  const cached = await syncPendingCache();
-  return [...cached.filter((issue) => issue.type === "idea" && issue.mod_id === null), ...(data as Issue[])];
+  return (data ?? []) as Issue[];
 }
 
 export async function fetchIssueCount(): Promise<number> {
@@ -208,21 +191,23 @@ export async function fetchOpenIssueCounts(): Promise<Record<string, number>> {
 export async function createIssue(
   issue: Pick<Issue, "mod_id" | "type" | "title" | "description" | "author_name"> & { attachments?: File[] }
 ): Promise<Issue> {
-  const urls = await uploadIssueAttachments(issue.attachments ?? []);
-  const { attachments, ...values } = issue;
-  const { data: sessionData } = await supabase.auth.getSession();
-  const isAuthenticated = Boolean(sessionData.session);
-  const cachedIssue: Issue = { id: crypto.randomUUID(), mod_id: values.mod_id, type: values.type, title: values.title, description: values.description, author_name: values.author_name, status: "open", votes: 0, created_at: new Date().toISOString(), attachment_urls: urls, moderation_status: isAuthenticated ? "approved" : "pending" };
-  const { error } = await supabase.from("issues").insert({ ...values, id: cachedIssue.id, attachment_urls: urls, moderation_status: isAuthenticated ? "approved" : "pending" });
-  if (error) throw error;
-  if (!isAuthenticated) {
-    addPendingIssue(cachedIssue);
-  }
-  return cachedIssue;
+  const issueId = crypto.randomUUID();
+  const uploads = await uploadIssueAttachments(issueId, issue.attachments ?? []);
+  const created = await invokeOrThrow<{ issue: Issue }>("submit-issue", {
+    id: issueId,
+    mod_id: issue.mod_id,
+    type: issue.type,
+    title: issue.title,
+    description: issue.description,
+    author_name: issue.author_name,
+    attachment_paths: uploads.map((upload) => upload.path),
+  });
+  return created.issue;
 }
 
 export async function updateIssueContent(id: string, title: string, description: string, attachmentUrls: string[], newAttachments: File[] = []): Promise<string[]> {
-  const uploaded = [...attachmentUrls, ...(await uploadIssueAttachments(newAttachments))];
+  const uploads = await uploadIssueAttachments(id, newAttachments);
+  const uploaded = [...attachmentUrls, ...uploads.map((upload) => upload.url)];
   const { error } = await supabase.from("issues").update({ title, description, attachment_urls: uploaded }).eq("id", id);
   if (error) throw error;
   return uploaded;
@@ -233,23 +218,43 @@ export async function updateIssueStatus(id: string, status: "open" | "closed"): 
   if (error) throw error;
 }
 
+export async function softDeleteIssue(id: string): Promise<void> {
+  const { error } = await supabase.from("issues").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deleteIssue(id: string): Promise<void> {
   const { error } = await supabase.from("issues").delete().eq("id", id);
   if (error) throw error;
 }
 
 export async function fetchPendingIssues(): Promise<Issue[]> {
-  const { data, error } = await supabase.from("issues").select("*").eq("moderation_status", "pending").order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("issues").select("*").eq("moderation_status", "pending").is("deleted_at", null).order("created_at", { ascending: false });
   if (error) throw error;
   return data as Issue[];
 }
 
-export async function moderateIssue(id: string, status: "approved" | "rejected"): Promise<void> {
-  const { error } = await supabase.from("issues").update({ moderation_status: status, moderated_at: new Date().toISOString(), moderation_reason: status === "rejected" ? "Rejected by moderator" : null }).eq("id", id);
+export async function moderateIssue(id: string, status: "approved" | "rejected", reason?: string): Promise<void> {
+  const { error } = await supabase.from("issues").update({
+    moderation_status: status,
+    moderated_at: new Date().toISOString(),
+    moderation_reason: status === "rejected" ? (reason?.trim() || "Rejected by moderator") : null,
+  }).eq("id", id);
   if (error) throw error;
 }
 
-export async function voteForIdea(issueId: string): Promise<void> {
-  const { error } = await supabase.rpc("increment_issue_votes", { p_issue_id: issueId });
+export async function toggleVote(issueId: string): Promise<number> {
+  const session = await ensureSession();
+  if (!session) throw new Error("Could not start a session to vote.");
+  const { data, error } = await supabase.rpc("toggle_vote", { p_issue_id: issueId });
   if (error) throw error;
+  return Number(data ?? 0);
+}
+
+export async function fetchMyVotes(): Promise<Set<string>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return new Set();
+  const { data, error } = await supabase.from("issue_votes").select("issue_id");
+  if (error) return new Set();
+  return new Set((data ?? []).map((row: { issue_id: string }) => row.issue_id));
 }

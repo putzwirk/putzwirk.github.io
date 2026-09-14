@@ -24,15 +24,15 @@ function ScrollToTop() {
 
 function LucidLayout() {
   const location = useLocation();
-  const { session, signOut } = useAuth();
+  const { session, isStaff, signOut } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
   useEffect(() => {
-    if (!session) { setPendingCount(0); return; }
+    if (!isStaff) { setPendingCount(0); return; }
     const refreshPendingCount = () => fetchPendingIssues().then((items) => setPendingCount(items.length)).catch(() => undefined);
     refreshPendingCount();
     const timer = window.setInterval(refreshPendingCount, 5000);
     return () => window.clearInterval(timer);
-  }, [session]);
+  }, [isStaff]);
   const [settings, setSettings] = useState<BearSettings>(loadBearSettings);
   const isAdminPage = location.pathname.startsWith("/lucidblocks/admin");
   useEffect(() => {
@@ -58,7 +58,7 @@ function LucidLayout() {
               Ideas
             </Link>
             <SettingsPopover settings={settings} onChange={setSettings} />
-            {session && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
+            {isStaff && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
           </nav>
         </div>
       </header>
@@ -82,7 +82,7 @@ function LucidLayout() {
             <a href="https://discord.gg/lucidblocks" target="_blank" rel="noreferrer">Discord ↗</a>
           </span>
           <span className="footer-copyright"><span className="copyright-mark">©</span> putzwirk 2026</span>
-          {!session && (
+          {!isStaff && (
             <Link to="/lucidblocks/login" className="footer-admin-link">
               Admin
             </Link>

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
+import { isStaffSession } from "../lib/session";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,9 +20,16 @@ export default function Login() {
     if (err) {
       setError("Invalid email or password.");
       setLoading(false);
-    } else {
-      navigate("/lucidblocks/admin");
+      return;
     }
+    const { data } = await supabase.auth.getSession();
+    if (!isStaffSession(data.session)) {
+      await supabase.auth.signOut();
+      setError("That account does not have moderator access.");
+      setLoading(false);
+      return;
+    }
+    navigate("/lucidblocks/admin");
   };
 
   return (

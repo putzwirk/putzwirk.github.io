@@ -30,9 +30,12 @@ export interface Issue {
   title: string;
   description: string;
   author_name: string;
+  author_id?: string | null;
   status: "open" | "closed";
   votes: number;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string | null;
   attachment_urls: string[];
   moderation_status?: "pending" | "approved" | "rejected";
 }

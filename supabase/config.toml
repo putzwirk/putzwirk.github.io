@@ -1,0 +1,13 @@
+project_id = "lucidblocks"
+
+[functions.submit-issue]
+verify_jwt = false
+
+[functions.create-upload-url]
+verify_jwt = false
+
+[functions.download]
+verify_jwt = false
+
+[functions.purge-attachments]
+verify_jwt = false

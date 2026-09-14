@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Mod, ModWithVersions, Issue } from "../types";
-import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, incrementVersionDownloads, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
+import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, registerDownload, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
 import { centerAfterRender } from "../lib/centerScroll";
 import { useAuth } from "../context/AuthContext";
 import IssueForm from "../components/IssueForm";
@@ -18,7 +18,7 @@ export default function ModDetail() {
   const [error, setError] = useState<string | null>(null);
   const [showIssueForm, setShowIssueForm] = useState(false);
   const issueFormRef = useRef<HTMLDivElement>(null);
-  const { session } = useAuth();
+  const { isStaff } = useAuth();
 
   useEffect(() => {
     if (showIssueForm) centerAfterRender(issueFormRef);
@@ -61,8 +61,9 @@ export default function ModDetail() {
 
   const latest = mod.mod_versions[0];
 
-  const handleDownload = (versionId: string) => {
-    incrementVersionDownloads(versionId).catch(() => undefined);
+  const handleDownload = async (versionId: string) => {
+    const counted = await registerDownload(versionId);
+    if (!counted) return;
     setMod((current) => current ? { ...current, mod_versions: current.mod_versions.map((v) => v.id === versionId ? { ...v, download_count: (v.download_count ?? 0) + 1 } : v) } : current);
   };
 
@@ -137,7 +138,7 @@ export default function ModDetail() {
             <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={mods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: mod.id, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
           </div>
         )}
-        <IssueList issues={issues} isAdmin={!!session} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
+        <IssueList issues={issues} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
       </section>
     </>
   );

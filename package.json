@@ -8,7 +8,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "publish": "node scripts/publish-mod.mjs",
-    "deploy": "set -a; source .env 2>/dev/null || true; npm run build && rm -rf /tmp/gh-pages-pub && cp -r dist /tmp/gh-pages-pub && git checkout gh-pages --quiet && rm -rf assets index.html && cp -r /tmp/gh-pages-pub/* . && touch .nojekyll && git add -A && git commit -m Publish --quiet && git push origin gh-pages && git checkout master --quiet"
+    "deploy": "set -a; source .env 2>/dev/null || true; npm run build && rm -rf /tmp/gh-pages-pub && cp -r dist /tmp/gh-pages-pub && git checkout gh-pages --quiet && rm -rf assets index.html && cp -r /tmp/gh-pages-pub/* . && touch .nojekyll && git add -A && git commit -m Publish --quiet && git push origin gh-pages && git checkout master --quiet",
+    "test:rls": "node scripts/rls-test/run.mjs",
+    "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts",
+    "test:functions": "deno test --allow-env supabase/functions/_shared/",
+    "set-admin": "node scripts/set-admin.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -19,6 +23,7 @@
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
     "@types/dompurify": "^3.0.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
