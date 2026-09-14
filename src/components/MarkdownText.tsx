@@ -71,10 +71,9 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
         const issueElement = document.getElementById(`issue-${issue.id}`);
         if (!issueElement) return;
         issueElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        issueElement.classList.remove("issue-row-highlight");
+        issueElement.classList.remove("issue-row-highlight", "issue-row-highlight-bug", "issue-row-highlight-idea");
         void issueElement.offsetWidth;
         issueElement.classList.add("issue-row-highlight", `issue-row-highlight-${issue.type}`);
-        window.setTimeout(() => issueElement.classList.remove("issue-row-highlight", `issue-row-highlight-${issue.type}`), 2200);
       }, 0);
     }
   };

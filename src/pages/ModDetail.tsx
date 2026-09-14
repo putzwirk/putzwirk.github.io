@@ -46,12 +46,11 @@ export default function ModDetail() {
       const issueElement = document.getElementById(`issue-${issueId}`);
       if (!issueElement) return;
       issueElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      issueElement.classList.remove("issue-row-highlight");
+      issueElement.classList.remove("issue-row-highlight", "issue-row-highlight-bug", "issue-row-highlight-idea");
       void issueElement.offsetWidth;
       const issue = issues.find((item) => item.id === issueId);
       const issueType = issue?.type ?? "bug";
       issueElement.classList.add("issue-row-highlight", `issue-row-highlight-${issueType}`);
-      window.setTimeout(() => issueElement.classList.remove("issue-row-highlight", `issue-row-highlight-${issueType}`), 2200);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, issues, modId]);
