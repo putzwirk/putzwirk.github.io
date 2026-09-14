@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import type { Issue, Mod } from "../types";
@@ -7,8 +8,13 @@ import ConfirmDialog from "./ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
 
 export default function MarkdownText({ text, issues = [], mods = [] }: { text: string; issues?: Issue[]; mods?: Mod[] }) {
-  const [selected, setSelected] = useState<Issue | null>(null);
+  const [hovered, setHovered] = useState<{ issue: Issue; left: number; top: number } | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
   const [externalUrl, setExternalUrl] = useState<string | null>(null);
+  const hoverTimer = useRef<number | null>(null);
+  const hideTimer = useRef<number | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const issueMap = new Map(issues.map((issue) => [issue.id, issue]));
   const modMap = new Map(mods.map((mod) => [mod.id, mod]));
   const withReferences = text.replace(/\[\[([^\]]+)\]\]/g, (_match, id: string) => {
@@ -24,6 +30,54 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
     });
   }).join("");
   const html = DOMPurify.sanitize(marked.parse(source, { breaks: true, gfm: true, async: false }) as string, { ADD_ATTR: ["data-issue-id", "tabindex"] });
+  const clearHoverTimer = () => {
+    if (hoverTimer.current !== null) {
+      window.clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+  const scheduleIssuePreview = (target: HTMLElement) => {
+    const id = target.dataset.issueId;
+    const issue = id ? issueMap.get(id) : undefined;
+    if (!issue) return;
+    clearHoverTimer();
+    hoverTimer.current = window.setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      const width = Math.min(672, window.innerWidth - 32);
+      setHovered({ issue, left: Math.max(16, Math.min(window.innerWidth - width - 16, rect.left)), top: rect.bottom + 8 });
+      setPreviewVisible(true);
+    }, 500);
+  };
+  const hideIssuePreview = () => {
+    clearHoverTimer();
+    hideTimer.current = window.setTimeout(() => setPreviewVisible(false), 160);
+  };
+  const openIssue = (issue: Issue) => {
+    clearHoverTimer();
+    setPreviewVisible(false);
+    setHovered(null);
+    const currentModId = location.pathname.match(/^\/lucidblocks\/mods\/([^/]+)/)?.[1];
+    const targetHash = `#issue-${issue.id}`;
+    if (issue.mod_id && decodeURIComponent(currentModId ?? "") !== issue.mod_id) {
+      navigate(`/lucidblocks/mods/${issue.mod_id}${targetHash}`);
+      return;
+    }
+    if (issue.mod_id) {
+      window.setTimeout(() => {
+        const issueElement = document.getElementById(`issue-${issue.id}`);
+        if (!issueElement) return;
+        issueElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        issueElement.classList.remove("issue-row-highlight");
+        void issueElement.offsetWidth;
+        issueElement.classList.add("issue-row-highlight", `issue-row-highlight-${issue.type}`);
+        window.setTimeout(() => issueElement.classList.remove("issue-row-highlight", `issue-row-highlight-${issue.type}`), 2200);
+      }, 0);
+    }
+  };
   return <>
     <div className="markdown-text" onClick={(event) => {
       const spoiler = (event.target as HTMLElement).closest<HTMLElement>(".spoiler");
@@ -31,13 +85,28 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
       const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href]");
       if (link) { if (link.href.startsWith(window.location.origin)) return; event.preventDefault(); setExternalUrl(link.href); return; }
       const target = (event.target as HTMLElement).closest<HTMLElement>("[data-issue-id]");
-      if (target) setSelected(issueMap.get(target.dataset.issueId ?? "") ?? null);
+      if (target) {
+        const issue = issueMap.get(target.dataset.issueId ?? "");
+        if (issue) openIssue(issue);
+      }
+    }} onMouseOver={(event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>("[data-issue-id]");
+      if (target) scheduleIssuePreview(target);
+    }} onMouseOut={(event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>("[data-issue-id]");
+      if (target && !target.contains(event.relatedTarget as Node | null)) hideIssuePreview();
+    }} onFocus={(event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>("[data-issue-id]");
+      if (target) scheduleIssuePreview(target);
+    }} onBlur={(event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>("[data-issue-id]");
+      if (target && !target.contains(event.relatedTarget as Node | null)) hideIssuePreview();
     }} onKeyDown={(event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       const spoiler = (event.target as HTMLElement).closest<HTMLElement>(".spoiler");
       if (spoiler) { event.preventDefault(); spoiler.classList.toggle("revealed"); }
     }} dangerouslySetInnerHTML={{ __html: html }} />
     {externalUrl && <ConfirmDialog title="Visit external website?" message={externalUrl} onCancel={() => setExternalUrl(null)} onConfirm={() => { window.open(externalUrl, "_blank", "noopener,noreferrer"); setExternalUrl(null); }} />}
-    {selected && <div className="issue-reference-popup" onClick={() => setSelected(null)}><article onClick={(event) => event.stopPropagation()}><button type="button" className="issue-reference-popup-close" onClick={() => setSelected(null)}>×</button><h3>{selected.title}</h3><p className="issue-reference-author">by {selected.author_name} · {formatDateTime(selected.created_at)}</p><MarkdownText text={selected.description} issues={issues} />{selected.attachment_urls?.length > 0 && <AttachmentGallery urls={selected.attachment_urls} />}</article></div>}
+    {hovered && <article className={`issue-reference-preview ${previewVisible ? "visible" : ""}`} style={{ left: hovered.left, top: hovered.top }} onMouseEnter={clearHoverTimer} onMouseLeave={hideIssuePreview}><h3>{hovered.issue.title}</h3>{hovered.issue.description && <MarkdownText text={hovered.issue.description} issues={issues} />}{hovered.issue.attachment_urls?.length > 0 && <AttachmentGallery urls={hovered.issue.attachment_urls} />}<p className="issue-reference-author">by {hovered.issue.author_name} · {formatDateTime(hovered.issue.created_at)}</p></article>}
   </>;
 }

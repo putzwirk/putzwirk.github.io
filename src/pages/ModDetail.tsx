@@ -39,6 +39,23 @@ export default function ModDetail() {
     refresh().catch((e) => setError(e.message)).finally(() => setLoading(false));
   }, [modId]);
 
+  useEffect(() => {
+    if (loading || !window.location.hash.startsWith("#issue-")) return;
+    const issueId = window.location.hash.slice("#issue-".length);
+    const frame = window.requestAnimationFrame(() => {
+      const issueElement = document.getElementById(`issue-${issueId}`);
+      if (!issueElement) return;
+      issueElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      issueElement.classList.remove("issue-row-highlight");
+      void issueElement.offsetWidth;
+      const issue = issues.find((item) => item.id === issueId);
+      const issueType = issue?.type ?? "bug";
+      issueElement.classList.add("issue-row-highlight", `issue-row-highlight-${issueType}`);
+      window.setTimeout(() => issueElement.classList.remove("issue-row-highlight", `issue-row-highlight-${issueType}`), 2200);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, issues, modId]);
+
   if (loading) return <p className="load-state">Loading</p>;
   if (error) return <div className="error-state">Couldn't load this mod. {error}</div>;
   if (!mod) return <p className="empty-state">Mod not found.</p>;
@@ -118,7 +135,7 @@ export default function ModDetail() {
         </div>
         {showIssueForm && (
           <div ref={issueFormRef}>
-            <IssueForm initialType="bug" allowTypeChoice referenceIssues={issues} referenceMods={mods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: mod.id, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
+            <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={mods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: mod.id, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
           </div>
         )}
         <IssueList issues={issues} isAdmin={!!session} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />

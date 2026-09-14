@@ -910,6 +910,30 @@ details[open] .chevron {
   opacity: 0.55;
 }
 
+.issue-row-highlight {
+  animation-duration: 2s;
+  animation-timing-function: ease;
+  animation-iteration-count: 1;
+}
+
+.issue-row-highlight-bug {
+  animation-name: issue-row-highlight-bug;
+}
+
+.issue-row-highlight-idea {
+  animation-name: issue-row-highlight-idea;
+}
+
+@keyframes issue-row-highlight-bug {
+  0%, 100% { border-color: var(--line-bold); background: linear-gradient(180deg, var(--surface-raised), var(--surface)); box-shadow: var(--shadow-sm); }
+  12%, 32%, 52% { border-color: var(--danger); background: var(--danger-soft); box-shadow: 0 0 0 4px var(--danger-soft), var(--shadow-md); }
+}
+
+@keyframes issue-row-highlight-idea {
+  0%, 100% { border-color: var(--line-bold); background: linear-gradient(180deg, var(--surface-raised), var(--surface)); box-shadow: var(--shadow-sm); }
+  12%, 32%, 52% { border-color: var(--state-open); background: var(--success-soft); box-shadow: 0 0 0 4px var(--success-soft), var(--shadow-md); }
+}
+
 .issue-details-toggle {
   padding: 0.2rem 0.45rem;
   font-size: 0.7rem;
@@ -948,6 +972,42 @@ details[open] .chevron {
 .issue-reference-idea {
   color: var(--state-open);
   background: var(--success-soft);
+}
+
+.issue-reference-preview {
+  position: fixed;
+  z-index: 220;
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: min(24rem, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.issue-reference-preview.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.issue-reference-preview h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.issue-reference-preview .issue-reference-author {
+  margin: 0.8rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
 }
 
 .issue-reference-popup {
@@ -1541,7 +1601,7 @@ details[open] .chevron {
   position: fixed;
   top: 0;
   left: 0;
-  width: min(18rem, calc(100% - 0.5rem));
+  width: min(42rem, calc(100% - 0.5rem));
   z-index: 300;
   display: grid;
   gap: 0.25rem;
@@ -1578,9 +1638,33 @@ details[open] .chevron {
   white-space: nowrap;
 }
 
+.reference-picker-kind {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  color: var(--text-muted);
+}
+
+.reference-picker-kind-kind-mod {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.reference-picker-kind-kind-bug {
+  color: var(--danger-hover);
+  border-color: rgba(224, 106, 106, 0.45);
+  background: var(--danger-soft);
+}
+
 .reference-picker-mod {
   flex: none;
-  max-width: 8rem;
+  max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2073,7 +2157,10 @@ details[open] .chevron {
 @media (max-width: 640px) {
   .reference-picker {
     width: min(18rem, calc(100vw - 1.5rem));
-    transform: none;
+  }
+
+  .reference-picker-mod {
+    max-width: 7rem;
   }
 
   .issue-reference-picker {

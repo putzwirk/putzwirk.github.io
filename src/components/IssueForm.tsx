@@ -220,7 +220,7 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
           maxLength={2000}
           placeholder={labels.descriptionPlaceholder}
         />
-        {pickerVisible && <div className="reference-picker issue-reference-picker">{referenceOptions.map((issue) => <button type="button" className="reference-picker-item" key={issue.id} onMouseDown={(event) => event.preventDefault()} onClick={() => insertReference(issue)}><span>{issue.status === "closed" ? "■" : "●"}</span><span className="reference-picker-title">{issue.title}</span><span className="reference-picker-mod">{issue.mod_id ? (modMap.get(issue.mod_id) ?? "Unknown mod") : "Ideas"}</span></button>)}</div>}
+        {pickerVisible && <div className="reference-picker issue-reference-picker">{referenceOptions.map((issue) => <button type="button" className="reference-picker-item" key={issue.id} onMouseDown={(event) => event.preventDefault()} onClick={() => insertReference(issue)}><span className="reference-picker-mod">{issue.mod_id ? (modMap.get(issue.mod_id) ?? "Unknown mod") : "Ideas"}</span><span>{issue.status === "closed" ? "■" : "●"}</span><span className={`reference-picker-kind reference-picker-kind-kind-${issue.type}`}>{issue.type === "bug" ? "Bug" : "Idea"}</span><span className="reference-picker-title">{issue.title}</span></button>)}</div>}
       </div>
       <div className="form-group">
         <label>Attachments (optional)</label>

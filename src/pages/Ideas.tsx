@@ -94,7 +94,7 @@ export default function Ideas() {
         ) : (
           <ul className="issue-list">
             {sortedIdeas.map((idea) => (
-              <li key={idea.id} className={`issue-row ${idea.status === "closed" ? "issue-row-closed" : ""}`}>
+              <li id={`issue-${idea.id}`} key={idea.id} className={`issue-row ${idea.status === "closed" ? "issue-row-closed" : ""}`}>
                 <div className="issue-row-content">
                   <div className="issue-row-head">
                     <span className={`type-badge ${idea.type === "bug" ? "type-bug" : "type-feature"}`}>{idea.type === "bug" ? "Bug" : "Feature"}</span>

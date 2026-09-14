@@ -35,7 +35,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
         const isLocal = pendingIds.has(issue.id);
         const hasDetails = Boolean(issue.description?.trim()) || (issue.attachment_urls?.length ?? 0) > 0;
         return (
-        <li key={issue.id} className={`issue-row ${issue.status === "closed" ? "issue-row-closed" : ""}`}>
+        <li id={`issue-${issue.id}`} key={issue.id} className={`issue-row ${issue.status === "closed" ? "issue-row-closed" : ""}`}>
           <div className="issue-row-content">
             <div className="issue-row-head">
               <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>
