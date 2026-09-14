@@ -49,7 +49,9 @@ export default function MyReports() {
 
   return (
     <>
-      <h1>My reports</h1>
+      <div className="hero">
+        <h1>My reports</h1>
+      </div>
       {!session ? (
         <p className="empty-state">Sign in to see the issues and ideas you have submitted.</p>
       ) : issues.length === 0 ? (
@@ -69,7 +71,6 @@ export default function MyReports() {
                 </div>
                 <div className="issue-row-meta">
                   <IssueStateBadge state={issue.state} />
-                  <span>{issue.status === "closed" ? "closed" : "open"}</span>
                   <span>{formatDateTime(issue.created_at)}</span>
                   <span>{issue.comment_count ?? 0} comment{(issue.comment_count ?? 0) === 1 ? "" : "s"}</span>
                 </div>

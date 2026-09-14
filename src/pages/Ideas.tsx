@@ -27,6 +27,7 @@ export default function Ideas() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [statusTab, setStatusTab] = useState<"open" | "closed">("open");
   const [expandedClosed, setExpandedClosed] = useState<Set<string>>(new Set());
   const [editingLocal, setEditingLocal] = useState<Issue | null>(null);
   const [deletingLocal, setDeletingLocal] = useState<Issue | null>(null);
@@ -40,8 +41,9 @@ export default function Ideas() {
   const commentReqRef = useRef<Record<string, number>>({});
   const { isStaff } = useAuth();
   const ideaFormRef = useRef<HTMLDivElement>(null);
-  const sortedIdeas = useMemo(() => [...ideas].sort((a, b) => (a.status === b.status ? 0 : a.status === "closed" ? 1 : -1)), [ideas]);
-  const modNames = useMemo(() => new Map(mentionMods.map((mod) => [mod.id, mod.name])), [mentionMods]);
+  const openIdeas = useMemo(() => ideas.filter((idea) => idea.status === "open"), [ideas]);
+  const closedIdeas = useMemo(() => ideas.filter((idea) => idea.status === "closed"), [ideas]);
+  const visibleIdeas = statusTab === "open" ? openIdeas : closedIdeas;
 
   useEffect(() => {
     fetchMyVotes().then(setVotedIds).catch(() => setVotedIds(new Set()));
@@ -136,7 +138,13 @@ export default function Ideas() {
     <>
       <div className="ideas-intro">
         <div>
-          <h1>Ideas</h1>
+          <div className="section-title-row">
+            <h1>Ideas</h1>
+            <div className="list-tabs" role="tablist" aria-label="Idea status">
+              <button type="button" role="tab" aria-selected={statusTab === "open"} className={statusTab === "open" ? "active" : ""} onClick={() => setStatusTab("open")}>Open<span className="chip tab-count">{openIdeas.length}</span></button>
+              <button type="button" role="tab" aria-selected={statusTab === "closed"} className={statusTab === "closed" ? "active" : ""} onClick={() => setStatusTab("closed")}>Solved<span className="chip tab-count">{closedIdeas.length}</span></button>
+            </div>
+          </div>
           <p className="intro intro-tight">Suggest a mod idea or vote on what you'd like to see next.</p>
         </div>
         <button className="btn btn-accent" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "Suggest an idea"}</button>
@@ -149,15 +157,16 @@ export default function Ideas() {
       <section>
         {ideas.length === 0 ? (
           <p className="empty-state">No ideas yet — be the first to suggest one.</p>
+        ) : visibleIdeas.length === 0 ? (
+          <p className="empty-state">{statusTab === "open" ? "No open ideas right now." : "Nothing marked solved yet."}</p>
         ) : (
           <ul className="issue-list">
-            {sortedIdeas.map((idea) => (
+            {visibleIdeas.map((idea) => (
               <li id={`issue-${idea.id}`} key={idea.id} className={`issue-row ${idea.status === "closed" ? "issue-row-closed" : ""}`}>
                 <div className="issue-row-content">
                   <div className="issue-row-head">
                     <span className={`type-badge ${idea.type === "bug" ? "type-bug" : "type-feature"}`}>{idea.type === "bug" ? "Bug" : "Feature"}</span>
                     <span className="issue-row-title"><Link to={`/lucidblocks/issues/${idea.id}`}>{idea.title}</Link>{idea.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>
-                    {idea.mod_id && modNames.get(idea.mod_id) && <span className="chip">{modNames.get(idea.mod_id)}</span>}
                   </div>
                   {idea.description && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <div className="issue-row-desc"><MarkdownText text={idea.description} issues={ideas} /></div>}
                   {idea.attachment_urls?.length > 0 && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <AttachmentGallery urls={idea.attachment_urls} />}
@@ -168,7 +177,6 @@ export default function Ideas() {
                     <span>by {idea.author_name}</span>
                     <span>{formatDateTime(idea.created_at)}</span>
                     <button type="button" className={`issue-comment-link comment-toggle${openComments.has(idea.id) ? " open" : ""}`} onClick={() => toggleComments(idea)} aria-expanded={openComments.has(idea.id)} aria-controls={`issue-comments-${idea.id}`} aria-label={`${commentLabel(idea)} on "${idea.title}"`}>{commentLabel(idea)}</button>
-                    {idea.status === "closed" && <span>closed</span>}
                     {isStaff && (
                       <div className="issue-actions">
                         <button className="btn btn-sm issue-action-btn" onClick={() => setEditingAdmin(idea)}>Edit</button>

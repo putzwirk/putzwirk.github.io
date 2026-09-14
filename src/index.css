@@ -710,6 +710,22 @@ section {
   margin: 0;
 }
 
+.section-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.section-title-row h1,
+.section-title-row h2 {
+  margin: 0;
+}
+
+.ideas-intro .section-title-row {
+  margin-bottom: var(--space-xs);
+}
+
 .version-entry {
   border: 2px solid var(--line-bold);
   border-radius: var(--radius);
@@ -914,10 +930,6 @@ details[open] .chevron {
   font-size: 0.68rem;
   font-weight: 400;
   opacity: 0.8;
-}
-
-.issue-row-closed {
-  opacity: 0.85;
 }
 
 .issue-row-closed::before {
@@ -3226,16 +3238,25 @@ details[open] .chevron {
   letter-spacing: 0.04em;
 }
 
-.staff-view-nav {
+.staff-view-nav,
+.list-tabs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
+}
+
+.staff-view-nav {
   margin: 0 0 var(--space-md);
 }
 
+.list-tabs {
+  margin: 0;
+}
+
 .staff-view-nav a,
-.staff-view-nav button {
+.staff-view-nav button,
+.list-tabs button {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -3253,7 +3274,8 @@ details[open] .chevron {
 }
 
 .staff-view-nav a:hover,
-.staff-view-nav button:hover {
+.staff-view-nav button:hover,
+.list-tabs button:hover {
   color: var(--text);
   border-color: var(--text-muted);
 }
@@ -3263,6 +3285,25 @@ details[open] .chevron {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+.list-tabs button {
+  min-width: 7rem;
+  justify-content: space-between;
+  border-radius: 999px;
+}
+
+.list-tabs button.active {
+  color: var(--text);
+  border-color: var(--text);
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.list-tabs .tab-count {
+  padding: 0.15rem 0.42rem;
+  font-size: 0.72rem;
+  color: var(--text-faint);
 }
 
 .comment-queue-toolbar {

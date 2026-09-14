@@ -194,6 +194,7 @@ export async function fetchIdeas(): Promise<Issue[]> {
     .from("issues")
     .select("*")
     .eq("type", "idea")
+    .is("mod_id", null)
     .neq("moderation_status", "rejected")
     .is("deleted_at", null)
     .order("votes", { ascending: false })

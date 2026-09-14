@@ -15,9 +15,10 @@ interface Props {
   onStatusChange: (id: string, status: "open" | "closed") => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onEdit?: (id: string) => Promise<void>;
+  emptyMessage?: string;
 }
 
-export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, onEdit }: Props) {
+export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, onEdit, emptyMessage = "No issues reported for this mod yet." }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editingLocal, setEditingLocal] = useState<Issue | null>(null);
   const [deletingLocal, setDeletingLocal] = useState<Issue | null>(null);
@@ -25,7 +26,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
   const [deletingAdmin, setDeletingAdmin] = useState<Issue | null>(null);
   const sortedIssues = useMemo(() => [...issues].sort((a, b) => (a.status === b.status ? 0 : a.status === "closed" ? 1 : -1)), [issues]);
   if (issues.length === 0) {
-    return <p className="empty-state">No issues reported for this mod yet.</p>;
+    return <p className="empty-state">{emptyMessage}</p>;
   }
   return (
     <>
@@ -49,7 +50,6 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
                   <span>by {issue.author_name}</span>
                   <span>{formatDateTime(issue.created_at)}</span>
                   <Link className="issue-comment-link" to={`/lucidblocks/issues/${issue.id}`}>{(issue.comment_count ?? 0) > 0 ? `${issue.comment_count} comment${issue.comment_count === 1 ? "" : "s"}` : "Comment"}</Link>
-                  {issue.status === "closed" && <span>closed</span>}
                   {(isAdmin || isLocal) && (
                     <div className="issue-actions">
                       {isLocal && <>

@@ -19,6 +19,7 @@ export default function ModDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueTab, setIssueTab] = useState<"open" | "closed">("open");
   const issueFormRef = useRef<HTMLDivElement>(null);
   const { isStaff } = useAuth();
 
@@ -63,7 +64,9 @@ export default function ModDetail() {
 
   const media = mod as ModWithVersions & ModMedia;
   const latest = mod.mod_versions[0];
-  const openCount = issues.filter((item) => item.status === "open").length;
+  const openIssues = issues.filter((item) => item.status === "open");
+  const closedIssues = issues.filter((item) => item.status === "closed");
+  const visibleIssues = issueTab === "open" ? openIssues : closedIssues;
 
   const handleDownload = async (versionId: string) => {
     const counted = await registerDownload(versionId);
@@ -145,7 +148,13 @@ export default function ModDetail() {
 
       <section>
         <div className="section-head">
-          <h2>Issues ({openCount} open)</h2>
+          <div className="section-title-row">
+            <h2>Issues</h2>
+            <div className="list-tabs" role="tablist" aria-label="Issue status">
+              <button type="button" role="tab" aria-selected={issueTab === "open"} className={issueTab === "open" ? "active" : ""} onClick={() => setIssueTab("open")}>Open<span className="chip tab-count">{openIssues.length}</span></button>
+              <button type="button" role="tab" aria-selected={issueTab === "closed"} className={issueTab === "closed" ? "active" : ""} onClick={() => setIssueTab("closed")}>Solved<span className="chip tab-count">{closedIssues.length}</span></button>
+            </div>
+          </div>
           <button className="btn btn-sm report-btn" onClick={() => setShowIssueForm(!showIssueForm)}>{showIssueForm ? "Cancel" : "Report an issue"}</button>
         </div>
         {showIssueForm && (
@@ -153,7 +162,7 @@ export default function ModDetail() {
             <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={mods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: mod.id, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
           </div>
         )}
-        <IssueList issues={issues} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
+        <IssueList issues={visibleIssues} emptyMessage={issueTab === "open" ? "No open issues for this mod." : "No solved issues yet."} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
       </section>
     </>
   );
