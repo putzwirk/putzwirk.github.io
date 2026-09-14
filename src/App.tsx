@@ -33,29 +33,6 @@ function LucidLayout() {
     const timer = window.setInterval(refreshPendingCount, 5000);
     return () => window.clearInterval(timer);
   }, [session]);
-  const [beeMessages, setBeeMessages] = useState<Array<{ id: number; text: string; x: number; y: number; opacity: number }>>([]);
-  useEffect(() => {
-    const showMessage = (event: Event) => {
-      const detail = (event as CustomEvent<{ id: number; text: string; x: number; y: number }>).detail;
-      setBeeMessages((messages) => [...messages, { ...detail, opacity: 1 }]);
-    };
-    const moveMessage = (event: Event) => {
-      const detail = (event as CustomEvent<{ id: number; x: number; y: number; opacity: number }>).detail;
-      setBeeMessages((messages) => messages.map((message) => message.id === detail.id ? { ...message, x: detail.x, y: detail.y, opacity: detail.opacity } : message));
-    };
-    const removeMessage = (event: Event) => {
-      const id = (event as CustomEvent<number>).detail;
-      setBeeMessages((messages) => messages.filter((message) => message.id !== id));
-    };
-    window.addEventListener("bubblebee-click", showMessage);
-    window.addEventListener("bubblebee-move", moveMessage);
-    window.addEventListener("bubblebee-done", removeMessage);
-    return () => {
-      window.removeEventListener("bubblebee-click", showMessage);
-      window.removeEventListener("bubblebee-move", moveMessage);
-      window.removeEventListener("bubblebee-done", removeMessage);
-    };
-  }, []);
   const [settings, setSettings] = useState<BearSettings>(loadBearSettings);
   const isAdminPage = location.pathname.startsWith("/lucidblocks/admin");
   useEffect(() => {
@@ -67,14 +44,13 @@ function LucidLayout() {
   return (
     <>
       {settings.animation && <BubbleBears key={`${settings.count}-${settings.speed}-${settings.hitForce}`} />}
-      {beeMessages.map((message) => <div className="bee-message" key={message.id} style={{ left: message.x, top: message.y - 55, opacity: message.opacity }}>{message.text}</div>)}
       <header className="site-header">
         <div className="wrap">
           <Link className="site-title" to="/lucidblocks/mods">
             <img className="site-title-icon" src="/lucid_blocks.ico" alt="" />
             <span className="site-title-text">Lucid Blocks Mods</span>
           </Link>
-          <nav className="site-nav">
+          <nav className={`site-nav${session ? "" : " site-nav-guest"}`}>
             <Link to="/lucidblocks/mods" className={location.pathname.startsWith("/lucidblocks/mods") ? "active" : ""}>
               Mods
             </Link>
@@ -97,9 +73,15 @@ function LucidLayout() {
         </Routes>
       </main>
       <footer className="site-footer">
-        <div className="wrap">
-          <span>Lucid Blocks Mods</span>
-          <span className="footer-copyright">© putzwirk 2026</span>
+        <div className="wrap footer-bar">
+          <span className="footer-brand">Lucid Blocks Mods</span>
+          <span className="footer-note">Game art <span className="copyright-mark">©</span> Lucy B. Locks · unofficial fan site</span>
+          <span className="footer-links">
+            <a href="https://store.steampowered.com/app/3495730/Lucid_Blocks/" target="_blank" rel="noreferrer">Steam ↗</a>
+            <a href="https://lucidblocks.com/modding.html" target="_blank" rel="noreferrer">Modding guide ↗</a>
+            <a href="https://discord.gg/lucidblocks" target="_blank" rel="noreferrer">Discord ↗</a>
+          </span>
+          <span className="footer-copyright"><span className="copyright-mark">©</span> putzwirk 2026</span>
           {!session && (
             <Link to="/lucidblocks/login" className="footer-admin-link">
               Admin

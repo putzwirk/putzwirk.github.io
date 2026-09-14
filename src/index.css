@@ -495,6 +495,12 @@ h2 {
     padding: 0.25rem 0;
   }
 
+  .site-nav-guest {
+    justify-content: center;
+    column-gap: 1.6rem;
+    font-size: 1rem;
+  }
+
   .header-logout-btn {
     font-size: 0.75rem;
     padding: 0.25rem 0.45rem;
@@ -2136,8 +2142,34 @@ details[open] .chevron {
   color: var(--text-faint);
 }
 
+.site-footer .footer-bar {
+  max-width: 1180px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  font-size: clamp(0.72rem, 0.7rem + 0.3vw, 0.92rem);
+}
+
+.footer-brand,
+.footer-note,
 .footer-copyright {
-  margin-left: auto;
+  white-space: nowrap;
+}
+
+.footer-brand {
+  margin-right: auto;
+}
+
+.footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+}
+
+.copyright-mark {
+  font-size: 1.3em;
+  line-height: 0;
+  vertical-align: -0.06em;
 }
 
 .site-footer a {
@@ -2147,41 +2179,6 @@ details[open] .chevron {
 
 .site-footer a:hover {
   color: var(--text-muted);
-}
-
-.bee-message {
-  position: fixed;
-  left: 50%;
-  top: 5.5rem;
-  z-index: 120;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  color: var(--accent-hover);
-  background: var(--surface-raised);
-  box-shadow: var(--shadow-lg), 0 0 18px var(--accent-soft);
-  width: max-content;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  animation: bee-message-in 0.2s ease-out;
-}
-
-.bee-message::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -0.45rem;
-  width: 0;
-  height: 0;
-  border-left: 0.45rem solid transparent;
-  border-right: 0.45rem solid transparent;
-  border-top: 0.45rem solid var(--accent);
-  transform: translateX(-50%);
-}
-
-@keyframes bee-message-in {
-  from { opacity: 0; transform: translate(-50%, -8px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .bubblebears {
@@ -2196,9 +2193,21 @@ details[open] .chevron {
   display: block;
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
 }
 
 @media (max-width: 640px) {
+  .settings-menu .settings-popover {
+    left: auto;
+    right: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  .settings-menu.open .settings-popover,
+  .settings-menu:hover .settings-popover {
+    transform: translateY(0) scale(1);
+  }
+
   .reference-picker {
     width: min(18rem, calc(100vw - 1.5rem));
   }
@@ -2256,6 +2265,23 @@ details[open] .chevron {
 
   .footer-copyright {
     margin-left: 0;
+  }
+
+  .site-footer .footer-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  .footer-right {
+    display: contents;
+  }
+
+  .footer-links {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.7rem;
   }
 
   .download-btn {
