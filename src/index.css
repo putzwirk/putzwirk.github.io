@@ -128,8 +128,8 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding-top: var(--space-md);
-  padding-bottom: var(--space-md);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   flex-wrap: nowrap;
 }
 
@@ -147,8 +147,8 @@ select {
 }
 
 .site-title-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   flex: none;
 }
 
