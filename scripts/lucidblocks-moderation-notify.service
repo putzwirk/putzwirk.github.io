@@ -1,0 +1,13 @@
+[Unit]
+Description=Lucid Blocks moderation notifications
+After=graphical-session.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/lucidblocks/moderation.env
+ExecStart=%h/.local/bin/lucidblocks-moderation-notify.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical-session.target

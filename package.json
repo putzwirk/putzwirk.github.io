@@ -1,0 +1,29 @@
+{
+  "name": "lucidblocks-mods",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "publish": "node scripts/publish-mod.mjs",
+    "deploy": "set -a; source .env 2>/dev/null || true; npm run build && rm -rf /tmp/gh-pages-pub && cp -r dist /tmp/gh-pages-pub && git checkout gh-pages --quiet && rm -rf assets index.html && cp -r /tmp/gh-pages-pub/* . && touch .nojekyll && git add -A && git commit -m Publish --quiet && git push origin gh-pages && git checkout master --quiet"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "dompurify": "^3.4.15",
+    "marked": "^18.0.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.0"
+  }
+}
