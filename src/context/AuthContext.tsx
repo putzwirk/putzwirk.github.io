@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { forgetDiscordAuthorization, isDiscordSession, isStaffSession, rememberDiscordAuthorization } from "../lib/session";
+import { forgetDiscordAuthorization, hasDiscordIdentity, isStaffSession, rememberDiscordAuthorization } from "../lib/session";
 
 interface AuthContextValue {
   session: Session | null;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (isDiscordSession(session)) rememberDiscordAuthorization();
+    if (hasDiscordIdentity(session)) rememberDiscordAuthorization();
   }, [session]);
 
   const signIn = async (email: string, password: string) => {

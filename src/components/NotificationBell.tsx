@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { fetchNotifications, fetchUnreadNotificationCount, markAllNotificationsRead, markNotificationRead } from "../lib/data";
-import type { Notification } from "../lib/data";
+import { fetchNotifications, fetchPendingComments, fetchPendingIssues, fetchUnreadNotificationCount, markAllNotificationsRead, markNotificationRead } from "../lib/data";
+import type { Notification, PendingComment } from "../lib/data";
+import type { Issue } from "../types";
 import { supabase } from "../lib/supabase";
 import { formatDateTime } from "../lib/formatDate";
 
@@ -19,11 +20,13 @@ export function describeNotification(notification: Notification): { label: strin
 }
 
 export default function NotificationBell() {
-  const { session } = useAuth();
+  const { session, isStaff } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<Notification[]>([]);
+  const [pendingIssues, setPendingIssues] = useState<Issue[]>([]);
+  const [pendingComments, setPendingComments] = useState<PendingComment[]>([]);
   const [loading, setLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
@@ -49,18 +52,39 @@ export default function NotificationBell() {
     if (openRef.current) refreshItems();
   }, [refreshCount, refreshItems]);
 
+  const refreshPending = useCallback(() => {
+    if (!isStaff) {
+      setPendingIssues([]);
+      setPendingComments([]);
+      return;
+    }
+    fetchPendingIssues().then(setPendingIssues).catch(() => undefined);
+    fetchPendingComments().then(setPendingComments).catch(() => undefined);
+  }, [isStaff]);
+
   useEffect(() => {
     refresh();
+    refreshPending();
     if (!session) return;
-    const onFocus = () => refresh();
-    const onVisibility = () => { if (!document.hidden) refresh(); };
+    const onFocus = () => { refresh(); refreshPending(); };
+    const onVisibility = () => { if (!document.hidden) { refresh(); refreshPending(); } };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [session, refresh]);
+  }, [session, refresh, refreshPending]);
+
+  useEffect(() => {
+    if (!isStaff) return;
+    const channel = supabase
+      .channel("moderation-queue")
+      .on("postgres_changes", { event: "*", schema: "public", table: "issues" }, refreshPending)
+      .on("postgres_changes", { event: "*", schema: "public", table: "issue_comments" }, refreshPending)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isStaff, refreshPending]);
 
   useEffect(() => {
     if (!session) return;
@@ -89,12 +113,16 @@ export default function NotificationBell() {
 
   if (!session) return null;
 
+  const pendingTotal = pendingIssues.length + pendingComments.length;
+  const attention = unread + pendingTotal;
+
   const toggleOpen = () => {
     const next = !open;
     setOpen(next);
     if (next) {
       refreshCount();
       refreshItems();
+      refreshPending();
     }
   };
 
@@ -122,14 +150,41 @@ export default function NotificationBell() {
         type="button"
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={attention > 0 ? `Notifications, ${attention} unread${pendingTotal > 0 ? " or awaiting approval" : ""}` : "Notifications"}
         onClick={toggleOpen}
       >
         <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></span>
-        {unread > 0 && <span className="notification-badge">{unread > 9 ? "9+" : unread}</span>}
+        {attention > 0 && <span className="notification-badge">{attention > 9 ? "9+" : attention}</span>}
       </button>
       <div className="notification-popover" aria-hidden={!open}>
-        <div className="notification-popover-head">
+        {pendingTotal > 0 && (
+          <>
+            <div className="notification-popover-head">
+              <span>Needs approval ({pendingTotal})</span>
+            </div>
+            <ul className="notification-popover-list">
+              {pendingIssues.slice(0, 4).map((issue) => (
+                <li key={issue.id}>
+                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/lucidblocks/admin/submissions"); }}>
+                    <span className="notification-popover-label">{issue.type === "bug" ? "Bug submission" : "Idea submission"}</span>
+                    <span className="notification-popover-detail">{issue.title} — by {issue.author_name}</span>
+                    <span className="notification-popover-time">{formatDateTime(issue.created_at)}</span>
+                  </button>
+                </li>
+              ))}
+              {pendingComments.slice(0, 4).map((comment) => (
+                <li key={comment.id}>
+                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/lucidblocks/admin/comments"); }}>
+                    <span className="notification-popover-label">Comment</span>
+                    <span className="notification-popover-detail">{comment.body.length > 90 ? `${comment.body.slice(0, 89)}…` : comment.body} — on {comment.issues?.title ?? "an issue"}</span>
+                    <span className="notification-popover-time">{formatDateTime(comment.created_at)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div className={`notification-popover-head${pendingTotal > 0 ? " notification-popover-head-secondary" : ""}`}>
           <span>Notifications</span>
           {unread > 0 && <button className="btn btn-sm btn-ghost" type="button" onClick={markAll}>Mark all read</button>}
         </div>

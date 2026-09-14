@@ -65,6 +65,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
   const [rejectedIssues, setRejectedIssues] = useState<Issue[]>([]);
   const [submissionTab, setSubmissionTab] = useState<"pending" | "blocked">("pending");
   const [deletingBlocked, setDeletingBlocked] = useState<Issue | null>(null);
+  const [deletingSubmission, setDeletingSubmission] = useState<Issue | null>(null);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [deletingMod, setDeletingMod] = useState<ModWithVersions | null>(null);
   const [deletingVersion, setDeletingVersion] = useState<ModVersion | null>(null);
@@ -242,6 +243,17 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
     setDeletingBlocked(null);
   };
 
+  const handleDeleteSubmission = async (id: string) => {
+    try {
+      await deleteIssue(id);
+      removeIssues([id]);
+      setRejectedIssues((items) => items.filter((item) => item.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the submission.");
+    }
+    setDeletingSubmission(null);
+  };
+
   const removeComments = (ids: string[]) => {
     setPendingComments((items) => items.filter((item) => !ids.includes(item.id)));
     setSelectedCommentIds(new Set());
@@ -340,9 +352,18 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
       </div>
       <nav className="staff-view-nav" aria-label="Moderation views">
         <Link to="/lucidblocks/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
-        <Link to="/lucidblocks/admin/submissions" className={submissionsPage ? "active" : ""}>Submissions</Link>
+        <Link to="/lucidblocks/admin/submissions" className={submissionsPage ? "active" : ""}>
+          <span className="submissions-tab-label">
+            Submissions
+            {pendingIssues.length > 0 && <span className="pending-count-dot" aria-label={`${pendingIssues.length} pending submissions`} />}
+          </span>
+        </Link>
         <Link to="/lucidblocks/admin/comments" className={commentsPage ? "active" : ""}>
-          Comments{pendingComments.length > 0 && <span className="chip tab-count">{pendingComments.length}</span>}
+          <span className="submissions-tab-label">
+            Comments
+            {pendingComments.length > 0 && <span className="pending-count-dot" aria-label={`${pendingComments.length} pending comments`} />}
+          </span>
+          {pendingComments.length > 0 && <span className="chip tab-count">{pendingComments.length}</span>}
         </Link>
       </nav>
       {error && <div className="error-state">{error}</div>}
@@ -410,6 +431,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
                     <button className="btn btn-sm" onClick={() => setLabelEditorId((current) => current === issue.id ? null : issue.id)}>{labelEditorId === issue.id ? "Close labels" : "Labels"}</button>
                     <button className="btn btn-accent btn-sm" onClick={() => handleApprove([issue.id])}>Approve</button>
                     <button className="btn btn-sm" onClick={() => setRejectTarget({ ids: [issue.id], label: issue.title })}>Reject</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeletingSubmission(issue)}>Delete</button>
                   </div>
                   {labelEditorId === issue.id && (
                     <LabelPicker
@@ -580,6 +602,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
       {rejectTarget && <RejectReasonDialog label={rejectTarget.label} onCancel={() => setRejectTarget(null)} onConfirm={handleRejectConfirm} />}
       {confirmBulkDelete && <ConfirmDialog title="Delete selected submissions?" message={`Delete ${selectedIssues.length} submission${selectedIssues.length === 1 ? "" : "s"} permanently?`} onCancel={() => setConfirmBulkDelete(false)} onConfirm={handleBulkDelete} />}
       {deletingBlocked && <ConfirmDialog title="Delete blocked submission?" message={`Delete "${deletingBlocked.title}" permanently?`} onCancel={() => setDeletingBlocked(null)} onConfirm={() => handleDeleteBlocked(deletingBlocked.id)} />}
+      {deletingSubmission && <ConfirmDialog title="Delete submission?" message={`Delete "${deletingSubmission.title}" permanently? Its comments, votes and attachments go with it.`} onCancel={() => setDeletingSubmission(null)} onConfirm={() => handleDeleteSubmission(deletingSubmission.id)} />}
       {commentRejectTarget && <RejectReasonDialog title="Reject comment?" label={commentRejectTarget.label} onCancel={() => setCommentRejectTarget(null)} onConfirm={handleCommentRejectConfirm} />}
       {deletingComment && <ConfirmDialog title="Delete comment?" message="This comment will be permanently removed." onCancel={() => setDeletingComment(null)} onConfirm={async () => { const target = deletingComment; await deleteComment(target.id); removeComment(target.id); setDeletingComment(null); }} />}
       {confirmCommentBulkDelete && <ConfirmDialog title="Delete selected comments?" message={`Delete ${selectedCommentIds.size} comment${selectedCommentIds.size === 1 ? "" : "s"} permanently?`} onCancel={() => setConfirmCommentBulkDelete(false)} onConfirm={handleCommentBulkDelete} />}

@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { Issue, IssueComment, Mod } from "../types";
-import { fetchIdeas, fetchAllPublicIssues, fetchModsWithVersions, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent, fetchComments, createComment, subscribeToIssue } from "../lib/data";
+import type { Issue, Mod } from "../types";
+import { fetchIdeas, fetchAllPublicIssues, fetchModsWithVersions, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
 import IssueForm from "../components/IssueForm";
 import MarkdownText from "../components/MarkdownText";
 import AttachmentGallery from "../components/AttachmentGallery";
-import CommentComposer from "../components/CommentComposer";
-import CommentThread from "../components/CommentThread";
 import ConfirmDialog from "../components/ConfirmDialog";
 import IssueEditForm from "../components/IssueEditForm";
 import IssueStateBadge from "../components/IssueStateBadge";
@@ -34,12 +32,6 @@ export default function Ideas() {
   const [deletingLocal, setDeletingLocal] = useState<Issue | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Issue | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<Issue | null>(null);
-  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
-  const [commentsByIssue, setCommentsByIssue] = useState<Record<string, IssueComment[]>>({});
-  const [commentsLoading, setCommentsLoading] = useState<Set<string>>(new Set());
-  const [commentsError, setCommentsError] = useState<Record<string, string>>({});
-  const commentSubsRef = useRef(new Map<string, () => void>());
-  const commentReqRef = useRef<Record<string, number>>({});
   const { isStaff } = useAuth();
   const navigate = useNavigate();
   const ideaFormRef = useRef<HTMLDivElement>(null);
@@ -67,56 +59,6 @@ export default function Ideas() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
-
-  const loadComments = useCallback(async (issueId: string, reportError = false) => {
-    const token = (commentReqRef.current[issueId] ?? 0) + 1;
-    commentReqRef.current[issueId] = token;
-    setCommentsLoading((current) => new Set(current).add(issueId));
-    try {
-      const items = await fetchComments(issueId);
-      if (commentReqRef.current[issueId] !== token) return;
-      setCommentsByIssue((current) => ({ ...current, [issueId]: items }));
-      setCommentsError((current) => { const next = { ...current }; delete next[issueId]; return next; });
-      const approved = items.filter((comment) => comment.moderation_status === "approved").length;
-      setIdeas((current) => current.map((item) => (item.id === issueId ? { ...item, comment_count: approved } : item)));
-    } catch (e) {
-      if (!reportError || commentReqRef.current[issueId] !== token) return;
-      setCommentsError((current) => ({ ...current, [issueId]: e instanceof Error ? e.message : "Could not load comments." }));
-    } finally {
-      if (commentReqRef.current[issueId] === token) {
-        setCommentsLoading((current) => { const next = new Set(current); next.delete(issueId); return next; });
-      }
-    }
-  }, []);
-
-  const closeCommentChannel = useCallback((id: string) => {
-    commentSubsRef.current.get(id)?.();
-    commentSubsRef.current.delete(id);
-  }, []);
-
-  const toggleComments = (idea: Issue) => {
-    const id = idea.id;
-    const willOpen = !openComments.has(id);
-    setOpenComments((current) => {
-      const next = new Set(current);
-      if (willOpen) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-    if (willOpen) {
-      if (!commentSubsRef.current.has(id)) {
-        commentSubsRef.current.set(id, subscribeToIssue(id, () => { loadComments(id); }));
-      }
-      if (!commentsByIssue[id]) loadComments(id, true);
-    } else {
-      closeCommentChannel(id);
-    }
-  };
-
-  useEffect(() => () => {
-    commentSubsRef.current.forEach((unsubscribe) => unsubscribe());
-    commentSubsRef.current.clear();
-  }, []);
 
   const handleVote = async (id: string) => {
     try {
@@ -178,7 +120,7 @@ export default function Ideas() {
                     {idea.status === "open" && <button className={`vote-btn ${votedIds.has(idea.id) ? "voted" : ""}`} onClick={() => handleVote(idea.id)}>↑ {idea.votes} {votedIds.has(idea.id) ? "voted" : "vote"}</button>}
                     <span>by {idea.author_name}</span>
                     <span>{formatDateTime(idea.created_at)}</span>
-                    <button type="button" className={`issue-comment-link comment-toggle${openComments.has(idea.id) ? " open" : ""}`} onClick={() => toggleComments(idea)} aria-expanded={openComments.has(idea.id)} aria-controls={`issue-comments-${idea.id}`} aria-label={`${commentLabel(idea)} on "${idea.title}"`}>{commentLabel(idea)}</button>
+                    <Link className="issue-comment-link" to={`/lucidblocks/issues/${idea.id}`}>{commentLabel(idea)}</Link>
                     {isStaff && (
                       <div className="issue-actions">
                         <button className="btn btn-sm issue-action-btn" onClick={() => setEditingAdmin(idea)}>Edit</button>
@@ -193,31 +135,6 @@ export default function Ideas() {
                     )}
                     {!isStaff && idea.moderation_status === "pending" && <div className="issue-actions"><button className="btn btn-sm issue-action-btn" onClick={() => setEditingLocal(idea)}>Edit</button><button className="btn btn-sm issue-delete-btn" onClick={() => setDeletingLocal(idea)}>Remove</button></div>}
                   </div>
-                  {openComments.has(idea.id) && (
-                    <div className="issue-comments" id={`issue-comments-${idea.id}`} role="region" aria-label={`Comments on "${idea.title}"`}>
-                      {commentsLoading.has(idea.id) && !commentsByIssue[idea.id] ? (
-                        <p className="load-state">Loading comments</p>
-                      ) : commentsError[idea.id] ? (
-                        <div className="comments-error">
-                          <p className="form-error">{commentsError[idea.id]}</p>
-                          <button className="btn btn-sm" type="button" onClick={() => loadComments(idea.id, true)}>Retry</button>
-                        </div>
-                      ) : (
-                        <CommentThread comments={commentsByIssue[idea.id] ?? []} isStaff={isStaff} commentsClosed={idea.status === "closed"} referenceIssues={mentionIssues} referenceMods={mentionMods} onChanged={() => loadComments(idea.id, true)} />
-                      )}
-                      {idea.status === "closed" ? (
-                        <p className="comments-closed">Comments are closed on this idea.</p>
-                      ) : (
-                        <CommentComposer
-                          placeholder={`Comment on "${idea.title}"`}
-                          onSubmit={async (body, authorName) => {
-                            await createComment(idea.id, body, authorName, null);
-                            loadComments(idea.id);
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                 </div>
               </li>
             ))}

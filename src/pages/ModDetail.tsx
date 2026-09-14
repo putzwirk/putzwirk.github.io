@@ -114,7 +114,7 @@ export default function ModDetail() {
               {(mod.required_mods ?? []).map((slug) => {
                 const target = mods.find((candidate) => candidate.id === slug);
                 return (
-                  <Link key={slug} className="btn btn-sm dependency-btn" to={`/lucidblocks/mods/${slug}`}>
+                  <Link key={slug} className="chip dependency-chip" to={`/lucidblocks/mods/${slug}`}>
                     {target?.name ?? slug}
                   </Link>
                 );

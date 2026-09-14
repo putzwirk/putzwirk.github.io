@@ -12,8 +12,12 @@ export function isSignedInSession(session: Session | null): boolean {
   return Boolean(session) && !session?.user.is_anonymous;
 }
 
-export function isDiscordSession(session: Session | null): boolean {
-  return session?.user.app_metadata?.provider === "discord";
+export function hasDiscordIdentity(session: Session | null): boolean {
+  if (!session) return false;
+  const app = session.user.app_metadata ?? {};
+  if (app.provider === "discord") return true;
+  if (Array.isArray(app.providers) && app.providers.includes("discord")) return true;
+  return Boolean(session.user.identities?.some((identity) => identity.provider === "discord"));
 }
 
 const DISCORD_AUTHORIZATION_KEY = "lucidblocks.discord-authorized";
