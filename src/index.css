@@ -2372,7 +2372,25 @@ details[open] .chevron {
   border-bottom: 1px solid var(--line);
 }
 
-.issue-detail-title { margin: 8px 0 0; font-size: 26px; line-height: 1.25; }
+.issue-detail-head .issue-row-head {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.issue-detail-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.25;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.issue-detail-head .type-badge {
+  flex: none;
+  font-size: 0.9rem;
+  padding: 0.42rem 0.8rem;
+}
 
 .issue-detail-meta {
   display: flex;
@@ -2429,6 +2447,7 @@ details[open] .chevron {
 .comment-reply { background: var(--surface-sunken); }
 
 .comment-composer { margin-top: 8px; }
+.comments-closed { margin: 10px 0 0; color: var(--text-faint); font-size: 0.85rem; }
 .comment-composer-body { min-height: 72px; }
 .comment-composer-compact .comment-composer-body { min-height: 54px; }
 .comment-composer-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }

@@ -201,15 +201,19 @@ export default function Ideas() {
                           <button className="btn btn-sm" type="button" onClick={() => loadComments(idea.id, true)}>Retry</button>
                         </div>
                       ) : (
-                        <CommentThread comments={commentsByIssue[idea.id] ?? []} isStaff={isStaff} referenceIssues={mentionIssues} referenceMods={mentionMods} onChanged={() => loadComments(idea.id, true)} />
+                        <CommentThread comments={commentsByIssue[idea.id] ?? []} isStaff={isStaff} commentsClosed={idea.status === "closed"} referenceIssues={mentionIssues} referenceMods={mentionMods} onChanged={() => loadComments(idea.id, true)} />
                       )}
-                      <CommentComposer
-                        placeholder={`Comment on "${idea.title}"`}
-                        onSubmit={async (body, authorName) => {
-                          await createComment(idea.id, body, authorName, null);
-                          loadComments(idea.id);
-                        }}
-                      />
+                      {idea.status === "closed" ? (
+                        <p className="comments-closed">Comments are closed on this idea.</p>
+                      ) : (
+                        <CommentComposer
+                          placeholder={`Comment on "${idea.title}"`}
+                          onSubmit={async (body, authorName) => {
+                            await createComment(idea.id, body, authorName, null);
+                            loadComments(idea.id);
+                          }}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

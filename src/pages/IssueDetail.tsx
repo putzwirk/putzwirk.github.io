@@ -160,14 +160,18 @@ export default function IssueDetail() {
 
       <section className="issue-discussion">
         <h2>Discussion</h2>
-        <CommentThread comments={comments} isStaff={isStaff} referenceIssues={allIssues} referenceMods={mods} onChanged={load} />
-        <CommentComposer
-          placeholder="Add a comment"
-          onSubmit={async (body, authorName) => {
-            await createComment(issue.id, body, authorName, null);
-            await load();
-          }}
-        />
+        <CommentThread comments={comments} isStaff={isStaff} commentsClosed={issue.status === "closed"} referenceIssues={allIssues} referenceMods={mods} onChanged={load} />
+        {issue.status === "closed" ? (
+          <p className="comments-closed">Comments are closed on this issue.</p>
+        ) : (
+          <CommentComposer
+            placeholder="Add a comment"
+            onSubmit={async (body, authorName) => {
+              await createComment(issue.id, body, authorName, null);
+              await load();
+            }}
+          />
+        )}
       </section>
 
       {confirmDelete && (

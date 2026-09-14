@@ -31,13 +31,14 @@ Deno.serve(async (req) => {
 
   const { data: issue, error: issueError } = await service
     .from("issues")
-    .select("id, author_id, moderation_status, deleted_at")
+    .select("id, author_id, moderation_status, deleted_at, status")
     .eq("id", parsed.value.issue_id)
     .maybeSingle();
   if (issueError) return fail(issueError.message, 500);
   if (!issue || issue.deleted_at) return fail("Issue not found", 404);
   const canRead = issue.moderation_status === "approved" || issue.author_id === actor.id || actor.isStaff;
   if (!canRead) return fail("Issue not found", 404);
+  if (issue.status === "closed") return fail("Comments are closed on this issue", 409);
 
   if (parsed.value.parent_id) {
     const { data: parent, error: parentError } = await service

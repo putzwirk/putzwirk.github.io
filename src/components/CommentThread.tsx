@@ -13,9 +13,10 @@ interface Props {
   onChanged: () => Promise<void> | void;
   referenceIssues?: Issue[];
   referenceMods?: Mod[];
+  commentsClosed?: boolean;
 }
 
-export default function CommentThread({ comments, isStaff, onChanged, referenceIssues = [], referenceMods = [] }: Props) {
+export default function CommentThread({ comments, isStaff, onChanged, referenceIssues = [], referenceMods = [], commentsClosed = false }: Props) {
   const { session } = useAuth();
   const viewerId = session?.user?.id ?? null;
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -61,7 +62,7 @@ export default function CommentThread({ comments, isStaff, onChanged, referenceI
           </div>
         )}
         <div className="comment-actions">
-          {!nested && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>{replyTo === comment.id ? "Cancel reply" : "Reply"}</button>}
+          {!nested && !commentsClosed && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>{replyTo === comment.id ? "Cancel reply" : "Reply"}</button>}
           {pending && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setEditing(comment)}>Edit</button>}
           {isStaff && <button className="btn btn-sm issue-delete-btn" type="button" onClick={() => setDeleting(comment)}>Delete</button>}
         </div>
