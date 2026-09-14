@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
-import { accountDisplayName, isSignedInSession } from "../lib/session";
+import { accountDisplayName, hasDiscordAuthorization, isSignedInSession } from "../lib/session";
 
 export function authRedirectTarget(): string {
   if (typeof window === "undefined") return "";
@@ -10,7 +10,13 @@ export function authRedirectTarget(): string {
 }
 
 export async function signInWithDiscord(): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: authRedirectTarget() } });
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "discord",
+    options: {
+      redirectTo: authRedirectTarget(),
+      queryParams: hasDiscordAuthorization() ? { prompt: "none" } : undefined,
+    },
+  });
   return { error: error?.message ?? null };
 }
 
@@ -58,7 +64,7 @@ export default function AuthMenu() {
   if (!signedIn) {
     return (
       <div className="auth-menu auth-menu-guest">
-        <button className="btn btn-accent btn-sm auth-discord-btn" type="button" onClick={handleDiscord} disabled={busy}>
+        <button className="btn btn-sm auth-discord-btn" type="button" onClick={handleDiscord} disabled={busy}>
           <svg className="auth-discord-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path
               fill="currentColor"

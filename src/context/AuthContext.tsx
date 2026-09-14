@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { isStaffSession } from "../lib/session";
+import { forgetDiscordAuthorization, isDiscordSession, isStaffSession, rememberDiscordAuthorization } from "../lib/session";
 
 interface AuthContextValue {
   session: Session | null;
@@ -12,6 +12,16 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const initialAuthParams = typeof window === "undefined" ? "" : `${window.location.search}${window.location.hash}`;
+
+function returnedWithAuthError(): boolean {
+  if (!initialAuthParams) return false;
+  const [query = "", hash = ""] = initialAuthParams.split("#");
+  return [new URLSearchParams(query.replace(/^\?/, "")), new URLSearchParams(hash)].some(
+    (params) => params.has("error") || params.has("error_description") || params.has("error_code")
+  );
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -37,6 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (returnedWithAuthError()) forgetDiscordAuthorization();
+  }, []);
+
+  useEffect(() => {
+    if (isDiscordSession(session)) rememberDiscordAuthorization();
+  }, [session]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

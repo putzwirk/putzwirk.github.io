@@ -3229,16 +3229,13 @@ input[type="checkbox"]:not([role="switch"]):disabled {
 }
 
 .auth-discord-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  color: #fff;
 }
 
 .auth-discord-icon {
   width: 1.05rem;
   height: 1.05rem;
   flex: none;
-  color: #000;
 }
 
 .auth-discord-label {
