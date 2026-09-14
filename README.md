@@ -24,7 +24,6 @@ scripts/publish-mod.mjs   CLI publisher (checksum, versioned storage path, tags)
 scripts/deploy.sh         production deploy to the gh-pages branch
 scripts/deploy-maintenance.sh   puts the live site into maintenance
 e2e/                      Playwright specs (skip when E2E_BASE_URL/admin creds are unset)
-IMPLEMENTATION_PLAN.md    working plan and progress log (source of truth)
 ```
 
 ## Local development
@@ -64,8 +63,7 @@ supabase functions deploy submit-issue submit-comment create-upload-url download
 ```
 
 Secrets: `IP_HASH_PEPPER`, `PURGE_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `SITE_URL`.
-See `IMPLEMENTATION_PLAN.md` section 10 for the dashboard setup (anonymous sign-ins, DB webhooks,
-scheduled janitors).
+The dashboard setup covers anonymous sign-ins, DB webhooks and scheduled janitors.
 
 ## Publishing a mod
 

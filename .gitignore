@@ -14,3 +14,4 @@ coverage
 test-results
 playwright-report
 node_modules/.vite
+IMPLEMENTATION_PLAN.md
