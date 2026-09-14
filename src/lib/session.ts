@@ -8,6 +8,10 @@ export async function ensureSession(): Promise<boolean> {
   return !error;
 }
 
+export function isSignedInSession(session: Session | null): boolean {
+  return Boolean(session) && !session?.user.is_anonymous;
+}
+
 export function accountDisplayName(session: Session | null): string {
   if (!session || session.user.is_anonymous) return "";
   const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>;

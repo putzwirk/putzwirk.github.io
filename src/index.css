@@ -174,14 +174,6 @@ select {
   display: none;
 }
 
-.site-nav-separator {
-  flex: none;
-  align-self: center;
-  width: var(--separator-width);
-  height: 1.35em;
-  background: var(--separator);
-}
-
 @media (max-width: 900px) {
   .site-title-text {
     display: none;
@@ -527,11 +519,6 @@ h2 {
     justify-content: center;
     column-gap: 1.1rem;
     font-size: 1rem;
-  }
-
-  .header-logout-btn {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.45rem;
   }
 }
 
@@ -1931,30 +1918,6 @@ details[open] .chevron {
   margin-top: 3rem;
 }
 
-.submissions-tab-label {
-  position: relative;
-}
-
-.pending-count-dot {
-  position: absolute;
-  top: -0.25rem;
-  right: -0.45rem;
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: var(--danger);
-  box-shadow: none;
-}
-
-.pending-count-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--danger);
-  animation: pending-dot-pulse 0.8s ease-out infinite;
-}
-
 .admin-add-mod-btn {
   padding: 0.75rem 1.25rem;
   font-size: 1rem;
@@ -2166,15 +2129,6 @@ details[open] .chevron {
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.14);
 }
 
-.header-logout-btn {
-  white-space: nowrap;
-}
-
-.footer-admin-link {
-  font-size: 0.78rem;
-  opacity: 0.5;
-}
-
 .site-footer {
   border-top: var(--separator-width) solid var(--separator);
   min-height: 56px;
@@ -2345,11 +2299,6 @@ details[open] .chevron {
     overflow-wrap: anywhere;
     line-height: 1.35;
   }
-}
-
-@keyframes pending-dot-pulse {
-  0% { opacity: 0.7; transform: scale(1); }
-  100% { opacity: 0; transform: scale(2.5); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3220,11 +3169,6 @@ input[type="checkbox"]:not([role="switch"]):disabled {
   white-space: nowrap;
 }
 
-.auth-caret {
-  font-size: 0.7rem;
-  color: var(--text-faint);
-}
-
 .auth-popover {
   position: absolute;
   top: 100%;
@@ -3284,8 +3228,21 @@ input[type="checkbox"]:not([role="switch"]):disabled {
   gap: 0.6rem;
 }
 
-.auth-discord-short {
-  display: none;
+.auth-discord-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.auth-discord-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+  color: #000;
+}
+
+.auth-discord-label {
+  white-space: nowrap;
 }
 
 .auth-staff-link {
@@ -3429,12 +3386,9 @@ input[type="checkbox"]:not([role="switch"]):disabled {
     padding: 0.3rem 0.6rem;
   }
 
-  .auth-discord-full {
-    display: none;
-  }
-
-  .auth-discord-short {
-    display: inline;
+  .auth-discord-icon {
+    width: 0.95rem;
+    height: 0.95rem;
   }
 
   .auth-staff-link {
