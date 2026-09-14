@@ -52,7 +52,7 @@ export default function MyReports() {
                   </span>
                 </div>
                 <div className="issue-row-meta">
-                  <IssueStateBadge state={issue.state} />
+                  <IssueStateBadge state={issue.state} type={issue.type} />
                   <span>{formatDateTime(issue.created_at)}</span>
                   <span>{issue.comment_count ?? 0} comment{(issue.comment_count ?? 0) === 1 ? "" : "s"}</span>
                 </div>

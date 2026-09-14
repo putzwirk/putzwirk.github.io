@@ -409,7 +409,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
                     </div>
                     <div className="issue-row-desc"><MarkdownText text={issue.description} issues={pendingIssues} mods={mods} /></div>
                     <div className="issue-row-meta">
-                      <IssueStateBadge state={issue.state} />
+                      <IssueStateBadge state={issue.state} type={issue.type} />
                       <span>by {issue.author_name}</span>
                       <span>{formatDateTime(issue.created_at)}</span>
                       {issue.mod_id && <span className="chip">{mods.find((mod) => mod.id === issue.mod_id)?.name ?? issue.mod_id}</span>}
@@ -463,7 +463,7 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
                       <div className="issue-row-desc"><MarkdownText text={issue.description} issues={rejectedIssues} mods={mods} /></div>
                       {issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}
                       <div className="issue-row-meta">
-                        <IssueStateBadge state={issue.state} />
+                        <IssueStateBadge state={issue.state} type={issue.type} />
                         <span>by {issue.author_name}</span>
                         <span>{formatDateTime(issue.created_at)}</span>
                         {issue.mod_id && <span className="chip">{mods.find((mod) => mod.id === issue.mod_id)?.name ?? issue.mod_id}</span>}

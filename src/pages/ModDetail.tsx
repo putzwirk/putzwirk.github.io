@@ -21,6 +21,7 @@ export default function ModDetail() {
   const [error, setError] = useState<string | null>(null);
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [issueTab, setIssueTab] = useState<"open" | "closed">("open");
+  const [focusVersionId, setFocusVersionId] = useState<string | null>(null);
   const issueFormRef = useRef<HTMLDivElement>(null);
   const { isStaff } = useAuth();
 
@@ -59,6 +60,27 @@ export default function ModDetail() {
     return () => window.cancelAnimationFrame(frame);
   }, [loading, issues, modId]);
 
+  useEffect(() => {
+    if (loading || !mod || !window.location.hash.startsWith("#version-")) return;
+    const versionId = window.location.hash.slice("#version-".length);
+    if (mod.mod_versions.some((version) => version.id === versionId)) {
+      setFocusVersionId(versionId);
+    }
+  }, [loading, mod]);
+
+  useEffect(() => {
+    if (!focusVersionId) return;
+    const versionElement = document.getElementById(`version-${focusVersionId}`);
+    if (!versionElement) return;
+    const frame = window.requestAnimationFrame(() => {
+      versionElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      versionElement.classList.remove("version-entry-highlight");
+      void versionElement.offsetWidth;
+      versionElement.classList.add("version-entry-highlight");
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusVersionId]);
+
   if (loading) return <p className="load-state">Loading</p>;
   if (error) return <div className="error-state">Couldn't load this mod. {error}</div>;
   if (!mod) {
@@ -80,6 +102,7 @@ export default function ModDetail() {
   const openIssues = issues.filter((item) => item.status === "open");
   const closedIssues = issues.filter((item) => item.status === "closed");
   const visibleIssues = issueTab === "open" ? openIssues : closedIssues;
+  const versionById = Object.fromEntries(mod.mod_versions.map((v) => [v.id, v.version]));
 
   const handleDownload = async (versionId: string) => {
     const counted = await registerDownload(versionId);
@@ -136,7 +159,7 @@ export default function ModDetail() {
           <p className="empty-state">No versions published yet.</p>
         ) : (
           mod.mod_versions.map((v, i) => (
-            <details key={v.id} className="version-entry" open={i === 0}>
+            <details key={v.id} id={`version-${v.id}`} className="version-entry" open={i === 0 || v.id === focusVersionId}>
               <summary className="version-summary">
                 <span className="version-summary-left">
                   <span className="chip chip-version">v{v.version}</span>
@@ -175,7 +198,7 @@ export default function ModDetail() {
             <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={mods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: mod.id, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
           </div>
         )}
-        <IssueList issues={visibleIssues} emptyMessage={issueTab === "open" ? "No open issues for this mod." : "No solved issues yet."} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
+        <IssueList issues={visibleIssues} versionById={versionById} emptyMessage={issueTab === "open" ? "No open issues for this mod." : "No solved issues yet."} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(mod.id); setIssues(refreshed); }} />
       </section>
     </>
   );

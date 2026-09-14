@@ -17,9 +17,10 @@ interface Props {
   onDelete?: (id: string) => Promise<void>;
   onEdit?: (id: string) => Promise<void>;
   emptyMessage?: string;
+  versionById?: Record<string, string>;
 }
 
-export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, onEdit, emptyMessage = "No issues reported for this mod yet." }: Props) {
+export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, onEdit, emptyMessage = "No issues reported for this mod yet.", versionById }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const [editingLocal, setEditingLocal] = useState<Issue | null>(null);
@@ -48,7 +49,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
                 {(issue.status === "open" || isExpanded) && issue.description && <div className="issue-row-desc"><MarkdownText text={issue.description} issues={issues} /></div>}
                 {(issue.status === "open" || isExpanded) && issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}
                 <div className="issue-row-meta">
-                  <IssueStateBadge state={issue.state} />
+                  <IssueStateBadge state={issue.state} type={issue.type} fixedInVersion={issue.fixed_in_version_id ? versionById?.[issue.fixed_in_version_id] : undefined} />
                   <span>by {issue.author_name}</span>
                   <span>{formatDateTime(issue.created_at)}</span>
                   <Link className="issue-comment-link" to={`/lucidblocks/issues/${issue.id}`}>{(issue.comment_count ?? 0) > 0 ? `${issue.comment_count} comment${issue.comment_count === 1 ? "" : "s"}` : "Comment"}</Link>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Issue, IssueComment, IssueEvent, IssueState, Mod, ModVersion, ModWithVersions } from "../types";
 import { createComment, deleteIssue, fetchAllPublicIssues, fetchComments, fetchIssueById, fetchIssueEvents, fetchModById, fetchModsWithVersions, fetchMyVotes, subscribeToIssue, toggleVote, updateIssueState } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
@@ -20,6 +20,7 @@ interface Detail {
 export default function IssueDetail() {
   const { issueId } = useParams<{ issueId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isStaff } = useAuth();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [comments, setComments] = useState<IssueComment[]>([]);
@@ -32,6 +33,8 @@ export default function IssueDetail() {
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [draftState, setDraftState] = useState<IssueState | null>(null);
+  const [draftVersionId, setDraftVersionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!issueId) return;
@@ -78,6 +81,10 @@ export default function IssueDetail() {
   const backHref = issue.mod_id ? `/lucidblocks/mods/${issue.mod_id}` : "/lucidblocks/ideas";
   const backLabel = issue.mod_id ? `← ${modName ?? "Mod"}` : "← Ideas";
   const commentCount = issue.comment_count ?? comments.filter((comment) => comment.moderation_status === "approved").length;
+  const resolvedDraftState = draftState ?? issue.state ?? "open";
+  const resolvedDraftVersionId = resolvedDraftState === "fixed" ? (draftVersionId ?? issue.fixed_in_version_id ?? versions[0]?.id ?? null) : null;
+  const fixedVersion = issue.fixed_in_version_id ? versions.find((version) => version.id === issue.fixed_in_version_id) ?? null : null;
+  const pendingStateChange = resolvedDraftState !== (issue.state ?? "open") || resolvedDraftVersionId !== (issue.fixed_in_version_id ?? null);
 
   const handleVote = async () => {
     try {
@@ -93,6 +100,8 @@ export default function IssueDetail() {
     try {
       await updateIssueState(issue.id, state, fixedInVersionId);
       await load();
+      setDraftState(null);
+      setDraftVersionId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update the state.");
     }
@@ -107,7 +116,11 @@ export default function IssueDetail() {
           <h1 className="issue-detail-title">{issue.title}</h1>
         </div>
         <div className="issue-detail-meta">
-          <IssueStateBadge state={issue.state} />
+          {issue.state === "fixed" && fixedVersion ? (
+            <button className="state-badge state-fixed fixed-in-ref" type="button" title="Jump to this version on the mod page" onClick={() => navigate(`/lucidblocks/mods/${issue.mod_id}#version-${fixedVersion.id}`, { state: { from: location.pathname } })}>{isIdea ? "Added" : "Fixed"} in {fixedVersion.version}</button>
+          ) : (
+            <IssueStateBadge state={issue.state} type={issue.type} fixedInVersion={fixedVersion?.version} />
+          )}
           {issue.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}
           <span>by {issue.author_name}</span>
           <span>{formatDateTime(issue.created_at)}</span>
@@ -127,17 +140,23 @@ export default function IssueDetail() {
           <div className="issue-detail-staff">
             <label className="issue-detail-state">
               State
-              <select className="form-input" value={issue.state ?? "open"} onChange={(event) => { const next = event.target.value as IssueState; changeState(next, next === "fixed" ? (issue.fixed_in_version_id ?? versions[0]?.id ?? null) : null); }}>
+              <select className="form-input" value={resolvedDraftState} onChange={(event) => setDraftState(event.target.value as IssueState)}>
                 {ISSUE_STATES.map((state) => <option key={state} value={state}>{issueStateLabel(state)}</option>)}
               </select>
             </label>
-            {issue.state === "fixed" && versions.length > 0 && (
+            {resolvedDraftState === "fixed" && versions.length > 0 && (
               <label className="issue-detail-state">
                 Fixed in
-                <select className="form-input" value={issue.fixed_in_version_id ?? versions[0]?.id ?? ""} onChange={(event) => changeState("fixed", event.target.value || null)}>
+                <select className="form-input" value={resolvedDraftVersionId ?? ""} onChange={(event) => setDraftVersionId(event.target.value || null)}>
                   {versions.map((version) => <option key={version.id} value={version.id}>v{version.version}</option>)}
                 </select>
               </label>
+            )}
+            {pendingStateChange && (
+              <button className="btn btn-accent btn-sm" type="button" onClick={() => changeState(resolvedDraftState, resolvedDraftVersionId)}>Confirm</button>
+            )}
+            {(draftState !== null || draftVersionId !== null) && (
+              <button className="btn btn-sm" type="button" onClick={() => { setDraftState(null); setDraftVersionId(null); }}>Reset</button>
             )}
             <button className="btn issue-delete-btn issue-detail-delete" type="button" onClick={() => setConfirmDelete(true)}>Delete issue</button>
           </div>

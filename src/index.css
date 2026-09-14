@@ -750,6 +750,16 @@ section {
   overflow: hidden;
 }
 
+.version-entry-highlight {
+  animation: version-entry-highlight 3s ease both;
+}
+
+@keyframes version-entry-highlight {
+  0% { border-color: var(--line-bold); box-shadow: var(--shadow-sm); }
+  14%, 38% { border-color: var(--accent); box-shadow: 0 0 14px 2px rgba(242, 177, 52, 0.35), 0 0 34px 8px rgba(242, 177, 52, 0.18), var(--shadow-md); }
+  82%, 100% { border-color: var(--line-bold); box-shadow: var(--shadow-sm); }
+}
+
 .version-summary {
   display: flex;
   align-items: center;
@@ -1172,11 +1182,16 @@ details[open] .chevron {
   list-style: none;
 }
 
+.markdown-text ol {
+  margin: 0.35rem 0;
+  padding-left: 1.5rem;
+}
+
 .markdown-text li {
   position: relative;
 }
 
-.markdown-text li::before {
+.markdown-text ul > li::before {
   content: "•";
   position: absolute;
   left: -1rem;
@@ -1827,17 +1842,14 @@ details[open] .chevron {
 }
 
 .moderation-item .admin-controls {
-  position: absolute;
-  top: 1rem;
-  right: 1.1rem;
-  z-index: 2;
-  order: 1;
+  order: 4;
   align-self: flex-end;
+  flex-wrap: wrap;
+  margin-top: auto;
 }
 
 @media (max-width: 640px) {
   .moderation-item .admin-controls {
-    position: static;
     align-self: stretch;
   }
 }
@@ -2600,6 +2612,15 @@ details[open] .chevron {
 
 .issue-detail-state { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
 .issue-detail-state .form-input { min-width: 160px; }
+
+.fixed-in-ref {
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.fixed-in-ref:hover {
+  filter: brightness(1.12);
+}
 
 .issue-detail-delete {
   align-self: flex-end;
