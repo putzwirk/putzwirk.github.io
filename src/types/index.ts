@@ -19,6 +19,7 @@ export interface ModVersion {
   changelog: string[];
   pck_filename: string;
   storage_path: string;
+  download_count: number;
   created_at: string;
 }
 

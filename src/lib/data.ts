@@ -69,7 +69,7 @@ export async function deleteMod(id: string): Promise<void> {
 // ---------- Versions ----------
 
 export async function createVersion(
-  version: Omit<ModVersion, "id" | "created_at" | "storage_path">,
+  version: Omit<ModVersion, "id" | "created_at" | "storage_path" | "download_count">,
   file: File
 ): Promise<void> {
   const storagePath = `${version.mod_id}/${version.pck_filename}`;
@@ -122,6 +122,11 @@ export async function deleteVersion(version: ModVersion): Promise<void> {
 export function getDownloadUrl(storagePath: string): string {
   const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
   return data.publicUrl;
+}
+
+export async function incrementVersionDownloads(versionId: string): Promise<void> {
+  const { error } = await supabase.rpc("increment_version_downloads", { version_id: versionId });
+  if (error) throw error;
 }
 
 // ---------- Issues ----------

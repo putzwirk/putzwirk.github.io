@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Mod, ModWithVersions, Issue } from "../types";
-import { fetchModById, fetchIssuesByMod, fetchModsWithVersions, getDownloadUrl, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
+import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, incrementVersionDownloads, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
 import IssueForm from "../components/IssueForm";
 import IssueList from "../components/IssueList";
@@ -11,6 +11,7 @@ export default function ModDetail() {
   const { modId } = useParams<{ modId: string }>();
   const [mod, setMod] = useState<ModWithVersions | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [referenceIssues, setReferenceIssues] = useState<Issue[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,10 +20,11 @@ export default function ModDetail() {
 
   const refresh = async () => {
     if (!modId) return;
-    const [m, i, allMods] = await Promise.all([fetchModById(modId), fetchIssuesByMod(modId), fetchModsWithVersions()]);
+    const [m, i, allMods, allIssues] = await Promise.all([fetchModById(modId), fetchIssuesByMod(modId), fetchModsWithVersions(), fetchAllPublicIssues().catch(() => [] as Issue[])]);
     setMod(m);
     setIssues(i);
     setMods(allMods);
+    setReferenceIssues(allIssues.length > 0 ? allIssues : i);
   };
 
   useEffect(() => {
@@ -36,6 +38,11 @@ export default function ModDetail() {
   if (!mod) return <p className="empty-state">Mod not found.</p>;
 
   const latest = mod.mod_versions[0];
+
+  const handleDownload = (versionId: string) => {
+    incrementVersionDownloads(versionId).catch(() => undefined);
+    setMod((current) => current ? { ...current, mod_versions: current.mod_versions.map((v) => v.id === versionId ? { ...v, download_count: (v.download_count ?? 0) + 1 } : v) } : current);
+  };
 
   return (
     <>
@@ -51,7 +58,7 @@ export default function ModDetail() {
         <div className="mod-meta-row">
           <span>latest v{latest.version}</span>
           <span>Lucid Blocks v.{latest.game_version}</span>
-          <a className="btn btn-accent btn-sm" href={getDownloadUrl(latest.storage_path)} download>Download latest</a>
+          <a className="btn btn-accent btn-sm" href={getDownloadUrl(latest.storage_path)} download onClick={() => handleDownload(latest.id)}>Download latest</a>
           {(mod.required_mods ?? []).length > 0 && (
             <span className="requires-box">
               <span className="dependency-label">Requires</span>
@@ -68,7 +75,7 @@ export default function ModDetail() {
         </div>
       )}
       {mod.description && (
-        <div className="mod-description"><MarkdownText text={mod.description} issues={issues} mods={mods} /></div>
+        <div className="mod-description"><MarkdownText text={mod.description} issues={referenceIssues} mods={mods} /></div>
       )}
       <section>
         <h2>Versions</h2>
@@ -82,6 +89,7 @@ export default function ModDetail() {
                   <span className="chip chip-version">v{v.version}</span>
                   <span className="chip">Lucid Blocks v.{v.game_version}</span>
                   <span className="chip version-date">{v.release_date}</span>
+                  <span className="chip"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 2v8" /><path d="M4.5 7 8 10.5 11.5 7" /><path d="M3 13h10" /></svg>{v.download_count ?? 0}</span>
                 </span>
                 <svg className="chevron" width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -89,9 +97,9 @@ export default function ModDetail() {
               </summary>
               <div className="version-body">
                 <div className="changelog">
-                  <MarkdownText text={v.changelog.join("\n")} issues={issues} mods={mods} />
+                  <MarkdownText text={v.changelog.join("\n")} issues={referenceIssues} mods={mods} />
                 </div>
-                <a className="btn btn-accent btn-sm download-btn" href={getDownloadUrl(v.storage_path)} download><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 2v8" /><path d="M4.5 7 8 10.5 11.5 7" /><path d="M3 13h10" /></svg>Download {v.pck_filename}</a>
+                <a className="btn btn-accent btn-sm download-btn" href={getDownloadUrl(v.storage_path)} download onClick={() => handleDownload(v.id)}><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 2v8" /><path d="M4.5 7 8 10.5 11.5 7" /><path d="M3 13h10" /></svg>Download {v.pck_filename}</a>
               </div>
             </details>
           ))

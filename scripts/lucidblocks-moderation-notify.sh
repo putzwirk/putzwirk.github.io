@@ -22,7 +22,7 @@ while true; do
     [ -n "$id" ] || continue
     grep -Fqx "$id" "$state_file" && continue
     printf '%s\n' "$id" >> "$state_file"
-    action=$(notify-send --urgency=normal --app-name="Lucid Blocks" "New $type awaiting moderation" "$author posted: $title" \
+    action=$(notify-send --urgency=critical --expire-time=0 --hint=int:transient:0 --app-name="Lucid Blocks" "New $type awaiting moderation" "$author posted: $title" \
       --action="default=Review in admin" \
       --wait 2>/dev/null || true)
     if [ "$action" = "default" ]; then
