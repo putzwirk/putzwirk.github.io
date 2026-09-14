@@ -12,6 +12,8 @@
     "test:rls": "node scripts/rls-test/run.mjs",
     "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/submit-comment/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts supabase/functions/notify/index.ts",
     "test:functions": "deno test --allow-env supabase/functions/_shared/",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install",
     "set-admin": "node scripts/set-admin.mjs"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.17",
+    "@playwright/test": "^1.63.0",
     "@types/dompurify": "^3.0.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

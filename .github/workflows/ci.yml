@@ -24,6 +24,8 @@ jobs:
         run: npm run test:functions
       - name: Edge Function typecheck
         run: npm run check:functions
+      - name: Playwright spec discovery
+        run: npx playwright test --list
       - name: Typecheck and build
         run: npm run build
         env:

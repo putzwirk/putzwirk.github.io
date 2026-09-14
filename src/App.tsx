@@ -8,7 +8,10 @@ import Admin from "./pages/Admin";
 import Submissions from "./pages/Submissions";
 import Landing from "./pages/Landing";
 import IssueDetail from "./pages/IssueDetail";
+import Notifications from "./pages/Notifications";
+import MyReports from "./pages/MyReports";
 import BubbleBears from "./components/BubbleBears";
+import NotificationBell from "./components/NotificationBell";
 import SettingsPopover, { BearSettings } from "./components/SettingsPopover";
 import { loadBearSettings } from "./lib/bearSettings";
 import { useAuth } from "./context/AuthContext";
@@ -58,6 +61,7 @@ function LucidLayout() {
             <Link to="/lucidblocks/ideas" className={location.pathname === "/lucidblocks/ideas" ? "active" : ""}>
               Ideas
             </Link>
+            <NotificationBell />
             <SettingsPopover settings={settings} onChange={setSettings} />
             {isStaff && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
           </nav>
@@ -68,6 +72,8 @@ function LucidLayout() {
           <Route path="mods" element={<Home />} />
           <Route path="mods/:modId" element={<ModDetail />} />
           <Route path="issues/:issueId" element={<IssueDetail />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="my" element={<MyReports />} />
           <Route path="ideas" element={<Ideas />} />
           <Route path="login" element={<Login />} />
           <Route path="admin" element={<Admin />} />

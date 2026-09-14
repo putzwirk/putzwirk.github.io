@@ -347,3 +347,73 @@ export function subscribeToIssue(issueId: string, onChange: () => void): () => v
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 }
+
+export interface NotificationPayload {
+  preview?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface Notification {
+  id: string;
+  recipient_id: string;
+  kind: string;
+  issue_id: string | null;
+  comment_id: string | null;
+  payload: NotificationPayload;
+  read_at: string | null;
+  created_at: string;
+}
+
+export async function fetchNotifications(limit = 30): Promise<Notification[]> {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Notification[];
+}
+
+export async function fetchUnreadNotificationCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .is("read_at", null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .is("read_at", null);
+  if (error) throw error;
+}
+
+export async function fetchMyIssues(): Promise<Issue[]> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return [];
+  const { data, error } = await supabase
+    .from("issues")
+    .select("*")
+    .eq("author_id", sessionData.session.user.id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Issue[];
+}
+
+export async function convertAnonymousAccount(email: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.updateUser({ email });
+  return { error: error?.message ?? null };
+}

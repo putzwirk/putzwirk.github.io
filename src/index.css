@@ -2432,3 +2432,239 @@ details[open] .chevron {
   .issue-detail-title { font-size: 21px; }
   .issue-detail-state .form-input { min-width: 0; width: 100%; }
 }
+
+.notification-menu {
+  position: relative;
+  padding-bottom: 0.5rem;
+  margin-bottom: -0.5rem;
+}
+
+.notification-trigger {
+  position: relative;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.25rem 0;
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  line-height: 1.2;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.notification-trigger:hover,
+.notification-menu.open .notification-trigger {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.notification-trigger:active {
+  transform: translateY(1px);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.75rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.notification-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(340px, calc(100vw - 1rem));
+  max-height: min(440px, calc(100vh - 5rem));
+  overflow-y: auto;
+  padding: 0.85rem;
+  border: 1px solid var(--line-bold);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 110;
+}
+
+.notification-menu.open .notification-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.notification-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.notification-popover-head .btn {
+  font-weight: 600;
+}
+
+.notification-popover-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.notification-popover-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.notification-popover-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+
+.notification-popover-item.unread {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.notification-popover-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.notification-popover-item.unread .notification-popover-label {
+  color: var(--accent);
+}
+
+.notification-popover-detail {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.notification-popover-time {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+}
+
+.notification-popover-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+}
+
+.notification-popover-foot a {
+  color: var(--text-muted);
+}
+
+.notification-popover-foot a:hover {
+  color: var(--accent);
+}
+
+.notification-empty {
+  margin: 0.25rem 0;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
+.notifications-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.notifications-head h1 {
+  margin: 0;
+}
+
+.notification-page-row.notification-unread {
+  border-color: var(--accent);
+}
+
+.notification-page-item {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+
+.notification-page-item .issue-row-title {
+  margin-bottom: 0;
+}
+
+.notification-new {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.conversion-panel {
+  max-width: 520px;
+}
+
+.conversion-panel h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .notification-menu {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .notification-popover {
+    width: min(320px, calc(100vw - 1rem));
+  }
+
+  .notification-popover-foot {
+    flex-wrap: wrap;
+  }
+}
