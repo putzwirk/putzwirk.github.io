@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Issue, Label, ModVersion, ModWithVersions } from "../types";
 import { createLabel, createMod, createVersion, deleteIssue, deleteMod, deleteVersion, fetchIssueLabelsForIssues, fetchLabels, fetchModsWithVersions, fetchPendingIssues, moderateIssue, setIssueLabels, updateIssueContent, updateMod, updateVersion } from "../lib/data";
+import type { VersionMeta } from "../lib/data";
 import ModForm from "../components/ModForm";
 import VersionForm from "../components/VersionForm";
 import AttachmentGallery from "../components/AttachmentGallery";
@@ -319,7 +320,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
       )}
       {editingVersion && (
         <div ref={versionFormRef}>
-          <VersionForm modId={editingVersion.mod_id} initial={editingVersion} onSubmit={async (versionData, file) => { await updateVersion(editingVersion.id, { version: versionData.version, game_version: versionData.game_version, release_date: versionData.release_date, changelog: versionData.changelog }, file, editingVersion.mod_id); setEditingVersion(null); loadMods(); }} onCancel={() => setEditingVersion(null)} />
+          <VersionForm modId={editingVersion.mod_id} initial={editingVersion} onSubmit={async (versionData, file) => { await updateVersion(editingVersion.id, { version: versionData.version, game_version: versionData.game_version, release_date: versionData.release_date, changelog: versionData.changelog, published: versionData.published, channel: versionData.channel }, file, editingVersion.mod_id); setEditingVersion(null); loadMods(); }} onCancel={() => setEditingVersion(null)} />
         </div>
       )}
       {loading ? (
@@ -343,17 +344,22 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
               </div>
               {mod.mod_versions.length > 0 && (
                 <ul className="admin-version-list">
-                  {mod.mod_versions.map((v) => (
+                  {mod.mod_versions.map((v) => {
+                    const meta = v as ModVersion & VersionMeta;
+                    return (
                     <li key={v.id} className="admin-version-row">
                       <span className="chip chip-version">v{v.version}</span>
                       <span className="chip">Lucid Blocks v.{v.game_version}</span>
+                      {meta.published === false && <span className="chip chip-draft">Draft</span>}
+                      {meta.channel === "beta" && <span className="chip chip-beta">Beta</span>}
                       <span className="admin-version-date">{v.release_date}</span>
                       <span className="admin-version-actions">
                         <button className="btn btn-ghost btn-sm admin-version-edit-btn" onClick={() => { setVersionTarget(null); setEditingVersion(v); }}>Edit</button>
                         <button className="btn btn-ghost btn-sm admin-version-delete-btn" onClick={() => setDeletingVersion(v)}>Delete</button>
                       </span>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </div>

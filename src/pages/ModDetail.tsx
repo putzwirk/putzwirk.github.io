@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Mod, ModWithVersions, Issue } from "../types";
-import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, registerDownload, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
+import { fetchModById, fetchIssuesByMod, fetchAllPublicIssues, fetchModsWithVersions, getDownloadUrl, getModAssetUrl, registerDownload, createIssue, updateIssueStatus, deleteIssue } from "../lib/data";
+import type { ModMedia } from "../lib/data";
 import { centerAfterRender } from "../lib/centerScroll";
 import { useAuth } from "../context/AuthContext";
 import IssueForm from "../components/IssueForm";
 import IssueList from "../components/IssueList";
 import MarkdownText from "../components/MarkdownText";
+import ModGallery from "../components/ModGallery";
 import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
 import "../mod-tabs.css";
@@ -65,6 +67,7 @@ export default function ModDetail() {
   if (error) return <div className="error-state">Couldn't load this mod. {error}</div>;
   if (!mod) return <p className="empty-state">Mod not found.</p>;
 
+  const media = mod as ModWithVersions & ModMedia;
   const latest = mod.mod_versions[0];
   const openCount = issues.filter((item) => item.status === "open").length;
   const discussed = [...issues].filter((item) => (item.comment_count ?? 0) > 0).sort((a, b) => (b.comment_count ?? 0) - (a.comment_count ?? 0));
@@ -85,6 +88,7 @@ export default function ModDetail() {
   return (
     <>
       <Link className="back-link" to="/lucidblocks/mods">← Mods</Link>
+      {media.banner_path && <img className="mod-banner" src={getModAssetUrl(media.banner_path)} alt={`${mod.name} banner`} />}
       <div className="mod-head">
         <span className="slot-glyph">{mod.name.charAt(0)}</span>
         <div>
@@ -92,6 +96,11 @@ export default function ModDetail() {
           <p className="intro intro-tight">{mod.tagline}</p>
         </div>
       </div>
+      {(media.tags ?? []).length > 0 && (
+        <div className="mod-tags">
+          {(media.tags ?? []).map((tag) => <span className="chip" key={tag}>{tag}</span>)}
+        </div>
+      )}
       {latest && (
         <div className="mod-meta-row">
           <span>latest v{latest.version}</span>
@@ -126,6 +135,7 @@ export default function ModDetail() {
           ) : (
             <p className="empty-state">No description yet.</p>
           )}
+          <ModGallery paths={media.screenshots ?? []} />
         </section>
       )}
 

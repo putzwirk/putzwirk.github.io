@@ -65,6 +65,11 @@ const storagePath = `mods/${modId}/${version}/${pckFilename}`;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 const fileBuffer = await readFile(args.pck);
 const checksum = createHash("sha256").update(fileBuffer).digest("hex");
+const pckMagic = Buffer.from([0x47, 0x44, 0x50, 0x43]);
+if (fileBuffer.length < 4 || !fileBuffer.subarray(0, 4).equals(pckMagic)) {
+  console.error(`Refusing to publish ${pckFilename}: missing the GDPC header, so this is not a Godot .pck file.`);
+  process.exit(1);
+}
 
 const requiresFlag = args.requires ?? args["required-mods"] ?? args.requiredMods;
 let requiredMods;

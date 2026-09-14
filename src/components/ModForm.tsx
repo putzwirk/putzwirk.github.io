@@ -1,12 +1,27 @@
 import { useRef, useState } from "react";
 import type { Mod, ModWithVersions } from "../types";
+import { getModAssetUrl, uploadModAsset, validateModAsset } from "../lib/data";
+import type { ModMedia } from "../lib/data";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
 import MarkdownToolbar from "./MarkdownToolbar";
 
+function parseTags(value: string): string[] {
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const raw of value.split(",")) {
+    const tag = raw.trim();
+    if (tag.length === 0 || seen.has(tag.toLowerCase())) continue;
+    seen.add(tag.toLowerCase());
+    tags.push(tag);
+    if (tags.length === 12) break;
+  }
+  return tags;
+}
+
 interface Props {
-  mod: ModWithVersions | null;
+  mod: (ModWithVersions & ModMedia) | null;
   availableMods: Mod[];
-  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number; required_mods: string[] }) => Promise<void>;
+  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number; required_mods: string[]; tags: string[]; banner_path: string | null; screenshots: string[] }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -23,18 +38,63 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
     if (mod) return mod.required_mods ?? [];
     return ["QualiaMods"];
   });
+  const [tags, setTags] = useState(() => (mod?.tags ?? []).join(", "));
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPath] = useState<string | null>(mod?.banner_path ?? null);
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
+  const [screenshotPaths] = useState<string[]>(mod?.screenshots ?? []);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const options = availableMods.filter((candidate) => candidate.id !== mod?.id);
   const toggleDependency = (slug: string) => {
     setRequiredMods((current) => current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]);
   };
+  const handleBannerChange = (selected: File | null) => {
+    if (!selected) {
+      setBannerFile(null);
+      return;
+    }
+    const invalid = validateModAsset(selected);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    setError(null);
+    setBannerFile(selected);
+  };
+
+  const handleScreenshotsChange = (selected: FileList | null) => {
+    const list = Array.from(selected ?? []);
+    const invalid = list.map(validateModAsset).find((message): message is string => message !== null);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    setError(null);
+    setScreenshotFiles(list);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const modId = (mod?.id ?? id).trim();
+    const pending = [...(bannerFile ? [bannerFile] : []), ...screenshotFiles];
+    const assetError = pending.map(validateModAsset).find((message): message is string => message !== null);
+    if (assetError) {
+      setError(assetError);
+      return;
+    }
+    if (!modId) {
+      setError("A mod id is required before uploading assets.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder, required_mods: requiredMods });
+      let nextBannerPath = bannerPath;
+      if (bannerFile) nextBannerPath = await uploadModAsset(modId, bannerFile, "banner");
+      const nextScreenshots = [...screenshotPaths];
+      for (const screenshot of screenshotFiles) nextScreenshots.push(await uploadModAsset(modId, screenshot, "screenshot"));
+      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder, required_mods: requiredMods, tags: parseTags(tags), banner_path: nextBannerPath, screenshots: nextScreenshots });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -92,6 +152,27 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
         <div className="form-group">
           <label>Sort Order</label>
           <input className="form-input" type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
+        </div>
+      </div>
+      <div className="form-group">
+        <label>Tags (comma separated)</label>
+        <input className="form-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Gameplay, Quality of Life, Client-side" />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Banner image</label>
+          <input className="form-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={(e) => handleBannerChange(e.target.files?.[0] ?? null)} />
+          {bannerPath && <div className="mod-media-preview mod-banner-preview"><img src={getModAssetUrl(bannerPath)} alt="Current banner" /></div>}
+        </div>
+        <div className="form-group">
+          <label>Screenshots</label>
+          <input className="form-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" multiple onChange={(e) => handleScreenshotsChange(e.target.files)} />
+          {(screenshotPaths.length > 0 || screenshotFiles.length > 0) && (
+            <div className="mod-media-preview">
+              {screenshotPaths.map((path) => <img key={path} src={getModAssetUrl(path)} alt="Current screenshot" />)}
+              {screenshotFiles.map((screenshot) => <span className="chip" key={screenshot.name}>{screenshot.name}</span>)}
+            </div>
+          )}
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}

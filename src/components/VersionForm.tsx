@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Issue, ModVersion } from "../types";
+import type { Issue, Mod, ModVersion } from "../types";
 import { fetchAllPublicIssues, fetchModsWithVersions } from "../lib/data";
+import type { VersionMeta } from "../lib/data";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
 import { buildMentionReferences, type MentionReference } from "../lib/mentionReferences";
 import MarkdownToolbar from "./MarkdownToolbar";
+import MarkdownText from "./MarkdownText";
 
 interface VersionData {
   mod_id: string;
@@ -12,11 +14,13 @@ interface VersionData {
   release_date: string;
   changelog: string[];
   pck_filename: string;
+  published: boolean;
+  channel: "stable" | "beta";
 }
 
 interface Props {
   modId: string;
-  initial?: ModVersion | null;
+  initial?: (ModVersion & VersionMeta) | null;
   onSubmit: (versionData: VersionData, file: File | null) => Promise<void>;
   onCancel: () => void;
 }
@@ -26,6 +30,11 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
   const [gameVersion, setGameVersion] = useState(initial?.game_version ?? "");
   const [releaseDate, setReleaseDate] = useState(initial?.release_date ?? new Date().toISOString().slice(0, 10));
   const [changelog, setChangelog] = useState((initial?.changelog ?? []).join("\n"));
+  const [published, setPublished] = useState(initial?.published ?? true);
+  const [channel, setChannel] = useState<"stable" | "beta">(initial?.channel ?? "stable");
+  const [preview, setPreview] = useState(false);
+  const [previewMods, setPreviewMods] = useState<Mod[]>([]);
+  const [previewIssues, setPreviewIssues] = useState<Issue[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [references, setReferences] = useState<MentionReference[]>([]);
@@ -72,7 +81,7 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [changelog]);
   const isEdit = !!initial;
-  useEffect(() => { Promise.all([fetchModsWithVersions().catch(() => []), fetchAllPublicIssues().catch(() => [])]).then(([mods, issues]) => setReferences(buildMentionReferences(mods, issues as Issue[]))); }, []);
+  useEffect(() => { Promise.all([fetchModsWithVersions().catch(() => []), fetchAllPublicIssues().catch(() => [])]).then(([mods, issues]) => { setPreviewMods(mods); setPreviewIssues(issues as Issue[]); setReferences(buildMentionReferences(mods, issues as Issue[])); }); }, []);
 
   const insertTab = () => {
     const textarea = changelogRef.current;
@@ -121,7 +130,7 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
       const changelogLines = changelog.split("\n").map((line) => line.replace(/\s+$/, ""));
       while (changelogLines[0]?.trim() === "") changelogLines.shift();
       while (changelogLines[changelogLines.length - 1]?.trim() === "") changelogLines.pop();
-      await onSubmit({ mod_id: modId, version, game_version: gameVersion, release_date: releaseDate, changelog: changelogLines, pck_filename: file ? file.name : initial?.pck_filename ?? "" }, file);
+      await onSubmit({ mod_id: modId, version, game_version: gameVersion, release_date: releaseDate, changelog: changelogLines, pck_filename: file ? file.name : initial?.pck_filename ?? "", published, channel }, file);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setSubmitting(false);
@@ -145,12 +154,36 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
           <input className="form-input" type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} required />
         </div>
       </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Channel</label>
+          <select className="form-input" value={channel} onChange={(e) => setChannel(e.target.value as "stable" | "beta")}>
+            <option value="stable">Stable</option>
+            <option value="beta">Beta</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Visibility</label>
+          <label className="checkbox-label">
+            <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+            Published
+          </label>
+        </div>
+      </div>
       <div className="form-group">
         <div className="description-head">
           <label>Changelog</label>
-          <MarkdownToolbar value={changelog} onChange={setChangelog} textareaRef={changelogRef} onMention={insertReferenceTrigger} />
+          <span className="description-head-tools">
+            <MarkdownToolbar value={changelog} onChange={setChangelog} textareaRef={changelogRef} onMention={insertReferenceTrigger} />
+            <button type="button" className="btn btn-sm" onClick={() => setPreview((value) => !value)}>{preview ? "Edit" : "Preview"}</button>
+          </span>
         </div>
-        <div className="reference-input-wrap" ref={changelogWrapRef}><textarea ref={changelogRef} className="form-textarea changelog-textarea" value={changelog} onKeyDown={handleChangelogKeyDown} onSelect={(e) => { updateReferencePosition(e.currentTarget); setReferenceQuery(e.currentTarget.value.slice(0, e.currentTarget.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); }} onChange={(e) => { setChangelog(e.target.value); setReferenceQuery(e.target.value.slice(0, e.target.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); updateReferencePosition(e.target); }} placeholder={"Added new feature\nFixed bug with X\nImproved performance"}>
+        {preview && (
+          <div className="markdown-preview">
+            {changelog.trim() ? <MarkdownText text={changelog} issues={previewIssues} mods={previewMods} /> : <p className="empty-state">Nothing to preview yet.</p>}
+          </div>
+        )}
+        <div className="reference-input-wrap" ref={changelogWrapRef} style={{ display: preview ? "none" : undefined }}><textarea ref={changelogRef} className="form-textarea changelog-textarea" value={changelog} onKeyDown={handleChangelogKeyDown} onSelect={(e) => { updateReferencePosition(e.currentTarget); setReferenceQuery(e.currentTarget.value.slice(0, e.currentTarget.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); }} onChange={(e) => { setChangelog(e.target.value); setReferenceQuery(e.target.value.slice(0, e.target.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); updateReferencePosition(e.target); }} placeholder={"Added new feature\nFixed bug with X\nImproved performance"}>
         </textarea>{pickerVisible && <div className="reference-picker" style={{ left: referencePosition.left, top: referencePosition.top }}>{referenceOptions.map((reference) => <button type="button" className="reference-picker-item" key={reference.id} onMouseDown={(event) => event.preventDefault()} onClick={() => { const textarea = changelogRef.current; if (!textarea) return; const cursor = textarea.selectionStart; const before = changelog.slice(0, cursor); const marker = before.lastIndexOf("[["); const nextValue = `${changelog.slice(0, marker)}[[${reference.id}]]${changelog.slice(cursor)}`; setChangelog(nextValue); setReferenceQuery(null); requestAnimationFrame(() => { const nextCursor = marker + reference.id.length + 4; textarea.focus(); textarea.setSelectionRange(nextCursor, nextCursor); }); }}>{reference.kind !== "mod" && <span className="reference-picker-mod">{reference.detail}</span>}<span className={`reference-picker-kind reference-picker-kind-kind-${reference.kind}`}>{reference.kindLabel}</span><span className="reference-picker-title">{reference.title}</span></button>)}</div>}</div>
       </div>
       <div className="form-group">

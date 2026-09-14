@@ -63,8 +63,21 @@ export async function deleteMod(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export type ModAssetKind = "banner" | "screenshot";
+
+export interface ModMedia {
+  tags?: string[];
+  banner_path?: string | null;
+  screenshots?: string[];
+}
+
+export interface VersionMeta {
+  published?: boolean;
+  channel?: "stable" | "beta";
+}
+
 export async function createVersion(
-  version: Omit<ModVersion, "id" | "created_at" | "storage_path" | "download_count">,
+  version: Omit<ModVersion, "id" | "created_at" | "storage_path" | "download_count"> & VersionMeta,
   file: File
 ): Promise<void> {
   const storagePath = `${version.mod_id}/${version.pck_filename}`;
@@ -82,7 +95,7 @@ export async function createVersion(
   if (error) throw error;
 }
 
-export async function updateVersion(id: string, updates: Partial<Pick<ModVersion, "version" | "game_version" | "release_date" | "changelog" | "pck_filename" | "storage_path">>, file?: File | null, modId?: string): Promise<void> {
+export async function updateVersion(id: string, updates: Partial<Pick<ModVersion, "version" | "game_version" | "release_date" | "changelog" | "pck_filename" | "storage_path">> & VersionMeta, file?: File | null, modId?: string): Promise<void> {
   let storagePath = updates.storage_path;
   let pckFilename = updates.pck_filename;
   if (file && modId) {
@@ -98,6 +111,8 @@ export async function updateVersion(id: string, updates: Partial<Pick<ModVersion
   if (updates.changelog !== undefined) payload.changelog = updates.changelog;
   if (pckFilename !== undefined) payload.pck_filename = pckFilename;
   if (storagePath !== undefined) payload.storage_path = storagePath;
+  if (updates.published !== undefined) payload.published = updates.published;
+  if (updates.channel !== undefined) payload.channel = updates.channel;
   if (Object.keys(payload).length === 0) return;
   const { error } = await supabase.from("mod_versions").update(payload).eq("id", id);
   if (error) throw error;
@@ -116,6 +131,33 @@ export async function deleteVersion(version: ModVersion): Promise<void> {
 
 export function getDownloadUrl(storagePath: string): string {
   const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
+  return data.publicUrl;
+}
+
+const MOD_ASSETS_BUCKET = "mod-assets";
+const MAX_MOD_ASSET_BYTES = 5 * 1024 * 1024;
+const MOD_ASSET_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif"]);
+
+export function validateModAsset(file: File): string | null {
+  if (!MOD_ASSET_TYPES.has(file.type)) return `${file.name} must be a PNG, JPEG, WebP, GIF or AVIF image.`;
+  if (file.size > MAX_MOD_ASSET_BYTES) return `${file.name} is larger than 5 MB.`;
+  return null;
+}
+
+export async function uploadModAsset(modId: string, file: File, kind: ModAssetKind): Promise<string> {
+  if (!modId) throw new Error("A mod id is required before uploading assets.");
+  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase() : "";
+  const path = kind === "banner"
+    ? `mods/${modId}/banner-${crypto.randomUUID()}${extension}`
+    : `mods/${modId}/screenshots/${crypto.randomUUID()}${extension}`;
+  const { error } = await supabase.storage.from(MOD_ASSETS_BUCKET).upload(path, file);
+  if (error) throw error;
+  return path;
+}
+
+export function getModAssetUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  const { data } = supabase.storage.from(MOD_ASSETS_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
 
