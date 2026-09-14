@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Issue, Mod } from "../types";
 import { ATTACHMENT_ACCEPT, ATTACHMENT_TYPE_ERROR, MAX_ATTACHMENTS, MAX_ATTACHMENT_SIZE, MAX_ATTACHMENT_TOTAL, isAllowedAttachmentFile, isVideoAttachmentUrl } from "../lib/issueAttachments";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
+import { buildMentionReferences, type MentionReference } from "../lib/mentionReferences";
 import MarkdownToolbar from "./MarkdownToolbar";
 
 interface Props {
@@ -22,7 +23,7 @@ const LABELS = {
   idea: {
     title: "Suggest feature description",
     titlePlaceholder: "What would you like to see?",
-    descriptionPlaceholder: "Describe the feature you'd like to see in more detail",
+    descriptionPlaceholder: "Describe the mod you'd like to see in more detail",
     submit: "Submit Idea",
   },
 };
@@ -55,11 +56,11 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
       next.forEach(({ url }) => URL.revokeObjectURL(url));
     };
   }, [attachments]);
-  const modMap = useMemo(() => new Map(referenceMods.map((mod) => [mod.id, mod.name])), [referenceMods]);
+  const mentionReferences = useMemo(() => buildMentionReferences(referenceMods, referenceIssues), [referenceMods, referenceIssues]);
   const referenceOptions = useMemo(() => {
     const query = (referenceQuery ?? "").toLowerCase();
-    return referenceIssues.filter((issue) => issue.title.toLowerCase().includes(query) || (modMap.get(issue.mod_id ?? "") ?? "").toLowerCase().includes(query)).slice(0, 8);
-  }, [referenceIssues, referenceQuery, modMap]);
+    return mentionReferences.filter((reference) => reference.title.toLowerCase().includes(query) || reference.detail.toLowerCase().includes(query) || reference.kindLabel.toLowerCase().startsWith(query)).slice(0, 30);
+  }, [mentionReferences, referenceQuery]);
   const pickerVisible = referenceActive && referenceQuery !== null && referenceOptions.length > 0;
   useEffect(() => {
     if (!pickerVisible) return;
@@ -83,11 +84,11 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
     };
   }, [pickerVisible]);
 
-  const insertReference = (issue: Issue) => {
+  const insertReference = (reference: MentionReference) => {
     const cursor = descriptionCursor ?? description.length;
     const markerStart = description.slice(0, cursor).lastIndexOf("[[");
     if (markerStart < 0) return;
-    const replacement = `[[${issue.id}]] `;
+    const replacement = `[[${reference.id}]] `;
     setDescription(`${description.slice(0, markerStart)}${replacement}${description.slice(cursor)}`);
     setDescriptionCursor(markerStart + replacement.length);
     setReferenceActive(false);
@@ -224,7 +225,7 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
           maxLength={2000}
           placeholder={labels.descriptionPlaceholder}
         />
-        {pickerVisible && <div className="reference-picker issue-reference-picker">{referenceOptions.map((issue) => <button type="button" className="reference-picker-item" key={issue.id} onMouseDown={(event) => event.preventDefault()} onClick={() => insertReference(issue)}><span className="reference-picker-mod">{issue.mod_id ? (modMap.get(issue.mod_id) ?? "Unknown mod") : "Ideas"}</span><span>{issue.status === "closed" ? "■" : "●"}</span><span className={`reference-picker-kind reference-picker-kind-kind-${issue.type}`}>{issue.type === "bug" ? "Bug" : "Idea"}</span><span className="reference-picker-title">{issue.title}</span></button>)}</div>}
+        {pickerVisible && <div className="reference-picker issue-reference-picker">{referenceOptions.map((reference) => <button type="button" className="reference-picker-item" key={reference.id} onMouseDown={(event) => event.preventDefault()} onClick={() => insertReference(reference)}>{reference.kind !== "mod" && <span className="reference-picker-mod">{reference.detail}</span>}<span className={`reference-picker-kind reference-picker-kind-kind-${reference.kind}`}>{reference.kindLabel}</span><span className="reference-picker-title">{reference.title}</span></button>)}</div>}
       </div>
       <div className="form-group">
         <label>Attachments (optional)</label>

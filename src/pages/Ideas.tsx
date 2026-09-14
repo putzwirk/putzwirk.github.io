@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Issue } from "../types";
-import { fetchIdeas, createIssue, voteForIdea, updateIssueStatus, deleteIssue, updateIssueContent } from "../lib/data";
+import type { Issue, Mod } from "../types";
+import { fetchIdeas, fetchAllPublicIssues, fetchModsWithVersions, createIssue, voteForIdea, updateIssueStatus, deleteIssue, updateIssueContent } from "../lib/data";
 import { removePendingIssue, updatePendingIssue } from "../lib/pendingIssues";
 import { uploadIssueAttachments } from "../lib/issueAttachments";
 import { useAuth } from "../context/AuthContext";
@@ -25,6 +25,8 @@ function loadVotedIds(): Set<string> {
 
 export default function Ideas() {
   const [ideas, setIdeas] = useState<Issue[]>([]);
+  const [mentionIssues, setMentionIssues] = useState<Issue[]>([]);
+  const [mentionMods, setMentionMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -49,7 +51,14 @@ export default function Ideas() {
 
   const loadIdeas = () => {
     setLoading(true);
-    fetchIdeas().then(setIdeas).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    Promise.all([fetchIdeas(), fetchAllPublicIssues().catch(() => [] as Issue[]), fetchModsWithVersions().catch(() => [] as Mod[])])
+      .then(([fetchedIdeas, allIssues, allMods]) => {
+        setIdeas(fetchedIdeas);
+        setMentionIssues(allIssues);
+        setMentionMods(allMods);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   };
 
   const handleVote = async (id: string) => {
@@ -85,7 +94,7 @@ export default function Ideas() {
       </div>
       {showForm && (
         <div ref={ideaFormRef}>
-          <IssueForm initialType="idea" referenceIssues={ideas} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: null, type, title, description: desc, author_name: author, attachments }); setIdeas((items) => [pendingIssue, ...items]); setShowForm(false); }} />
+          <IssueForm initialType="idea" referenceIssues={mentionIssues} referenceMods={mentionMods} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: null, type, title, description: desc, author_name: author, attachments }); setIdeas((items) => [pendingIssue, ...items]); setShowForm(false); }} />
           </div>
       )}
       <section>

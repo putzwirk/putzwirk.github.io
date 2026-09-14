@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Issue, ModVersion } from "../types";
 import { fetchAllPublicIssues, fetchModsWithVersions } from "../lib/data";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
+import { buildMentionReferences, type MentionReference } from "../lib/mentionReferences";
 import MarkdownToolbar from "./MarkdownToolbar";
 
 interface VersionData {
@@ -27,18 +28,22 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
   const [changelog, setChangelog] = useState((initial?.changelog ?? []).join("\n"));
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [references, setReferences] = useState<Array<{ id: string; title: string; detail: string; kind: string; kindLabel: string }>>([]);
+  const [references, setReferences] = useState<MentionReference[]>([]);
   const [referenceQuery, setReferenceQuery] = useState<string | null>(null);
   const [referencePosition, setReferencePosition] = useState({ left: 0, top: 0 });
   const updateReferencePosition = (textarea: HTMLTextAreaElement) => { const before = textarea.value.slice(0, textarea.selectionStart); const lines = before.split("\n"); const rect = textarea.getBoundingClientRect(); const cursorX = rect.left + lines[lines.length - 1].length * 8; const pickerWidth = Math.min(window.innerWidth <= 640 ? 288 : 672, window.innerWidth - 16); const left = window.innerWidth <= 640 ? (window.innerWidth - pickerWidth) / 2 : cursorX - pickerWidth / 2; setReferencePosition({ left: Math.max(8, Math.min(window.innerWidth - pickerWidth - 8, left)), top: Math.min(window.innerHeight - 170, rect.top + Math.min(240, (lines.length - 1) * 22 + (window.innerWidth <= 640 ? 56 : 24))) }); }; 
   const referenceOptions = useMemo(() => {
     const query = (referenceQuery ?? "").toLowerCase();
-    return references.filter((reference) => reference.title.toLowerCase().includes(query) || reference.detail.toLowerCase().includes(query)).slice(0, 8);
+    return references.filter((reference) => reference.title.toLowerCase().includes(query) || reference.detail.toLowerCase().includes(query) || reference.kindLabel.toLowerCase().startsWith(query)).slice(0, 30);
   }, [references, referenceQuery]);
   const [submitting, setSubmitting] = useState(false);
   const changelogRef = useRef<HTMLTextAreaElement>(null);
   const changelogWrapRef = useRef<HTMLDivElement>(null);
   const pickerVisible = referenceQuery !== null && referenceOptions.length > 0;
+  useEffect(() => {
+    if (!pickerVisible || !changelogRef.current) return;
+    updateReferencePosition(changelogRef.current);
+  }, [pickerVisible]);
   useEffect(() => {
     if (!pickerVisible) return;
     const previous = document.body.style.overflow;
@@ -67,7 +72,7 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [changelog]);
   const isEdit = !!initial;
-  useEffect(() => { Promise.all([fetchModsWithVersions().catch(() => []), fetchAllPublicIssues().catch(() => [])]).then(([mods, issues]) => { const modMap = new Map(mods.map((mod) => [mod.id, mod.name])); setReferences([...mods.map((mod) => ({ id: mod.id, title: mod.name, detail: mod.name, kind: "mod", kindLabel: "Mod" })), ...(issues as Issue[]).map((issue) => ({ id: issue.id, title: issue.title, detail: issue.mod_id ? (modMap.get(issue.mod_id) ?? "Unknown mod") : "Ideas", kind: issue.type, kindLabel: issue.type === "bug" ? "Bug" : "Idea" }))]); }); }, []);
+  useEffect(() => { Promise.all([fetchModsWithVersions().catch(() => []), fetchAllPublicIssues().catch(() => [])]).then(([mods, issues]) => setReferences(buildMentionReferences(mods, issues as Issue[]))); }, []);
 
   const insertTab = () => {
     const textarea = changelogRef.current;
@@ -90,6 +95,7 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
     requestAnimationFrame(() => {
       textarea.focus();
       textarea.setSelectionRange(start + 2, start + 2);
+      updateReferencePosition(textarea);
     });
   };
 
@@ -145,7 +151,7 @@ export default function VersionForm({ modId, initial, onSubmit, onCancel }: Prop
           <MarkdownToolbar value={changelog} onChange={setChangelog} textareaRef={changelogRef} onMention={insertReferenceTrigger} />
         </div>
         <div className="reference-input-wrap" ref={changelogWrapRef}><textarea ref={changelogRef} className="form-textarea changelog-textarea" value={changelog} onKeyDown={handleChangelogKeyDown} onSelect={(e) => { updateReferencePosition(e.currentTarget); setReferenceQuery(e.currentTarget.value.slice(0, e.currentTarget.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); }} onChange={(e) => { setChangelog(e.target.value); setReferenceQuery(e.target.value.slice(0, e.target.selectionStart).match(/\[\[([^\]]*)$/)?.[1] ?? null); updateReferencePosition(e.target); }} placeholder={"Added new feature\nFixed bug with X\nImproved performance"}>
-        </textarea>{pickerVisible && <div className="reference-picker" style={{ left: referencePosition.left, top: referencePosition.top }}>{referenceOptions.map((reference) => <button type="button" className="reference-picker-item" key={reference.id} onClick={() => { const textarea = changelogRef.current; if (!textarea) return; const cursor = textarea.selectionStart; const before = changelog.slice(0, cursor); const marker = before.lastIndexOf("[["); const nextValue = `${changelog.slice(0, marker)}[[${reference.id}]]${changelog.slice(cursor)}`; setChangelog(nextValue); setReferenceQuery(null); requestAnimationFrame(() => { const nextCursor = marker + reference.id.length + 4; textarea.focus(); textarea.setSelectionRange(nextCursor, nextCursor); }); }}>{reference.kind !== "mod" && <span className="reference-picker-mod">{reference.detail}</span>}<span className={`reference-picker-kind reference-picker-kind-kind-${reference.kind}`}>{reference.kindLabel}</span><span className="reference-picker-title">{reference.title}</span></button>)}</div>}</div>
+        </textarea>{pickerVisible && <div className="reference-picker" style={{ left: referencePosition.left, top: referencePosition.top }}>{referenceOptions.map((reference) => <button type="button" className="reference-picker-item" key={reference.id} onMouseDown={(event) => event.preventDefault()} onClick={() => { const textarea = changelogRef.current; if (!textarea) return; const cursor = textarea.selectionStart; const before = changelog.slice(0, cursor); const marker = before.lastIndexOf("[["); const nextValue = `${changelog.slice(0, marker)}[[${reference.id}]]${changelog.slice(cursor)}`; setChangelog(nextValue); setReferenceQuery(null); requestAnimationFrame(() => { const nextCursor = marker + reference.id.length + 4; textarea.focus(); textarea.setSelectionRange(nextCursor, nextCursor); }); }}>{reference.kind !== "mod" && <span className="reference-picker-mod">{reference.detail}</span>}<span className={`reference-picker-kind reference-picker-kind-kind-${reference.kind}`}>{reference.kindLabel}</span><span className="reference-picker-title">{reference.title}</span></button>)}</div>}</div>
       </div>
       <div className="form-group">
         <label>{isEdit ? `.pck File (current: ${initial?.pck_filename} — leave empty to keep)` : ".pck File"}</label>
