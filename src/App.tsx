@@ -72,7 +72,7 @@ function LucidLayout() {
         <div className="wrap">
           <Link className="site-title" to="/lucidblocks/mods">
             <img className="site-title-icon" src="/lucid_blocks.ico" alt="" />
-            Lucid Blocks Mods
+            <span className="site-title-text">Lucid Blocks Mods</span>
           </Link>
           <nav className="site-nav">
             <Link to="/lucidblocks/mods" className={location.pathname.startsWith("/lucidblocks/mods") ? "active" : ""}>
@@ -82,7 +82,7 @@ function LucidLayout() {
               Ideas
             </Link>
             <SettingsPopover settings={settings} onChange={setSettings} />
-            {session && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut}>Logout</button></>}
+            {session && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
           </nav>
         </div>
       </header>

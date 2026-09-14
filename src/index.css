@@ -451,15 +451,53 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .site-header .wrap {
-    justify-content: center;
-    flex-direction: column;
+  .wrap {
+    padding: 0 0.5rem;
   }
 
-  .site-title,
+  .site-header .wrap {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.4rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .site-title {
+    flex: none;
+  }
+
+  .site-title-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .site-title-text {
+    display: none;
+  }
+
   .site-nav {
-    justify-content: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: visible;
+    white-space: nowrap;
+    column-gap: 0.25rem;
+    font-size: 0.78rem;
     text-align: center;
+  }
+
+  .site-nav a {
+    padding: 0.25rem 0;
+  }
+
+  .header-logout-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.45rem;
   }
 }
 

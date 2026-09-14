@@ -5,6 +5,7 @@ docs
 .env.*
 !.env.example
 *.tsbuildinfo
+AGENTS.md
 
 supabase/.temp/
 
