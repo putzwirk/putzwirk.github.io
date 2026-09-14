@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
-import { marked } from "marked";
+import { marked, Renderer } from "marked";
 import type { Issue, Mod } from "../types";
 import AttachmentGallery from "./AttachmentGallery";
 import ConfirmDialog from "./ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
+}
+
+const codeRenderer = new Renderer();
+const renderCodeBlock = codeRenderer.code.bind(codeRenderer);
+codeRenderer.code = (token) => {
+  const label = token.lang ? escapeHtml(token.lang) : "code";
+  return `<div class="codebox"><div class="codebox-head"><span class="codebox-lang">${label}</span><button type="button" class="codebox-copy" aria-label="Copy code">Copy</button></div>${renderCodeBlock(token)}</div>`;
+};
 
 export default function MarkdownText({ text, issues = [], mods = [] }: { text: string; issues?: Issue[]; mods?: Mod[] }) {
   const [hovered, setHovered] = useState<{ issue: Issue; left: number; top: number } | null>(null);
@@ -18,19 +29,19 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
   const location = useLocation();
   const issueMap = new Map(issues.map((issue) => [issue.id, issue]));
   const modMap = new Map(mods.map((mod) => [mod.id, mod]));
-  const withReferences = text.replace(/\[\[([^\]]+)\]\]/g, (_match, id: string) => {
-    const issue = issueMap.get(id);
-    const mod = modMap.get(id);
-    return issue ? `<span class="issue-reference issue-reference-${issue.type === "bug" ? "bug" : "idea"}" role="button" tabindex="0" data-issue-id="${issue.id}">${issue.title} / by ${issue.author_name}</span>` : mod ? `<a class="mod-reference" href="/lucidblocks/mods/${mod.id}">${mod.name}</a>` : _match;
-  });
-  const source = withReferences.split(/(```[\s\S]*?```|`[^`\n]*?`)/g).map((segment, index) => {
+  const source = text.split(/(```[\s\S]*?```|`[^`\n]*?`)/g).map((segment, index) => {
     if (index % 2 === 1) return segment;
-    return segment.replace(/\|\|([^|\n]+?)\|\|/g, (_match, inner: string) => {
+    const withReferences = segment.replace(/\[\[([^\]]+)\]\]/g, (_match, id: string) => {
+      const issue = issueMap.get(id);
+      const mod = modMap.get(id);
+      return issue ? `<span class="issue-reference issue-reference-${issue.type === "bug" ? "bug" : "idea"}" role="button" tabindex="0" data-issue-id="${issue.id}">${issue.title} / by ${issue.author_name}</span>` : mod ? `<a class="mod-reference" href="/lucidblocks/mods/${mod.id}">${mod.name}</a>` : _match;
+    });
+    return withReferences.replace(/\|\|([^|\n]+?)\|\|/g, (_match, inner: string) => {
       const innerHtml = marked.parseInline(inner, { breaks: true, gfm: true, async: false }) as string;
       return `<span class="spoiler" role="button" tabindex="0" title="Spoiler — click to reveal">${innerHtml}</span>`;
     });
   }).join("");
-  const html = DOMPurify.sanitize(marked.parse(source, { breaks: true, gfm: true, async: false }) as string, { ADD_ATTR: ["data-issue-id", "tabindex"] });
+  const html = DOMPurify.sanitize(marked.parse(source, { breaks: true, gfm: true, async: false, renderer: codeRenderer }) as string, { ADD_ATTR: ["data-issue-id", "tabindex"] });
   const clearHoverTimer = () => {
     if (hoverTimer.current !== null) {
       window.clearTimeout(hoverTimer.current);
@@ -83,6 +94,17 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
     <div className="markdown-text" onClick={(event) => {
       const spoiler = (event.target as HTMLElement).closest<HTMLElement>(".spoiler");
       if (spoiler) { spoiler.classList.toggle("revealed"); return; }
+      const copyButton = (event.target as HTMLElement).closest<HTMLElement>(".codebox-copy");
+      if (copyButton) {
+        const code = copyButton.closest<HTMLElement>(".codebox")?.querySelector("code")?.textContent ?? "";
+        if (code) {
+          void navigator.clipboard.writeText(code).then(() => {
+            copyButton.textContent = "Copied!";
+            window.setTimeout(() => { copyButton.textContent = "Copy"; }, 1600);
+          }).catch(() => undefined);
+        }
+        return;
+      }
       const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href]");
       if (link) {
         if (link.href.startsWith(window.location.origin)) {
