@@ -83,10 +83,42 @@ export function handleMarkdownShortcut(event: React.KeyboardEvent<HTMLTextAreaEl
     const url = window.prompt("Enter URL", "https://");
     if (!url) return true;
     replaceSelection(textarea, `[${selected}](${url})`, onChange, value);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + 1, start + 1 + selected.length);
+    });
     return true;
   }
   const marker = key === "b" ? "**" : "*";
-  const wrapped = value.slice(start, end).startsWith(marker) && value.slice(start, end).endsWith(marker);
-  replaceSelection(textarea, wrapped ? selected.slice(marker.length, -marker.length) : `${marker}${selected}${marker}`, onChange, value);
+  const inner = value.slice(start, end);
+  const innerWrapped = inner.length >= marker.length * 2 && inner.startsWith(marker) && inner.endsWith(marker);
+  const outerWrapped = value.slice(start - marker.length, start) === marker && value.slice(end, end + marker.length) === marker;
+  if (innerWrapped) {
+    const replacement = inner.slice(marker.length, -marker.length);
+    replaceSelection(textarea, replacement, onChange, value);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + replacement.length);
+    });
+    return true;
+  }
+  if (outerWrapped) {
+    const removalStart = start - marker.length;
+    const nextValue = `${value.slice(0, removalStart)}${inner}${value.slice(end + marker.length)}`;
+    onChange(nextValue);
+    recordEdit(textarea, value);
+    textarea.focus();
+    requestAnimationFrame(() => {
+      textarea.setSelectionRange(removalStart, removalStart + inner.length);
+    });
+    return true;
+  }
+  const replacement = `${marker}${selected}${marker}`;
+  replaceSelection(textarea, replacement, onChange, value);
+  const selectStart = start + marker.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(selectStart, selectStart + selected.length);
+  });
   return true;
 }

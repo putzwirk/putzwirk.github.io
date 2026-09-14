@@ -60,7 +60,7 @@ function LucidLayout() {
     return () => window.clearInterval(timer);
   }, [isStaff]);
   const [settings, setSettings] = useState<BearSettings>(loadBearSettings);
-  const isAdminPage = location.pathname.startsWith("/lucidblocks/admin");
+  const isAdmin = location.pathname.startsWith("/lucidblocks/admin");
   return (
     <>
       {settings.animation && (
@@ -68,7 +68,7 @@ function LucidLayout() {
           <BubbleBears key={`${settings.count}-${settings.speed}-${settings.hitForce}`} />
         </Suspense>
       )}
-      <header className="site-header">
+      <header className={`site-header${isAdmin ? " site-header-admin" : ""}`}>
         <div className="wrap">
           <Link className="site-title" to="/lucidblocks/mods">
             <img className="site-title-icon" src="/lucid_blocks-64.png" alt="" width={26} height={26} />
@@ -84,7 +84,19 @@ function LucidLayout() {
             <SettingsPopover settings={settings} onChange={setSettings} />
             <AuthMenu />
             <NotificationBell />
-            {isStaff && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") && !location.pathname.endsWith("/comments") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><Link to="/lucidblocks/admin/comments" className={location.pathname.endsWith("/comments") ? "active" : ""}><span className="submissions-tab-label">Comments{pendingCommentCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCommentCount} pending comments`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
+            {isStaff && (
+              <>
+                <span className="site-nav-separator" aria-hidden="true" />
+                <Link to="/lucidblocks/admin" className={isAdmin && !location.pathname.endsWith("/submissions") && !location.pathname.endsWith("/comments") ? "active" : ""}>Admin</Link>
+                <Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}>
+                  <span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span>
+                </Link>
+                <Link to="/lucidblocks/admin/comments" className={location.pathname.endsWith("/comments") ? "active" : ""}>
+                  <span className="submissions-tab-label">Comments{pendingCommentCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCommentCount} pending comments`} />}</span>
+                </Link>
+                <button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button>
+              </>
+            )}
           </nav>
         </div>
       </header>

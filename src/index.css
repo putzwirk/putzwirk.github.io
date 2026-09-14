@@ -33,6 +33,9 @@
   --line: #2e2e2e;
   --line-strong: #464646;
   --line-bold: #5a5a5a;
+  --separator-width: 2px;
+  --separator-width-strong: 3px;
+  --separator: var(--line-strong);
   --text: #f2f2f2;
   --text-muted: #b3b3b3;
   --text-faint: #808080;
@@ -112,7 +115,7 @@ select {
 }
 
 .site-header {
-  border-bottom: 1px solid var(--line-strong);
+  border-bottom: var(--separator-width) solid var(--separator);
   background: linear-gradient(180deg, #242424, #1a1a1a);
   position: sticky;
   top: 0;
@@ -127,17 +130,20 @@ select {
   gap: var(--space-sm);
   padding-top: var(--space-md);
   padding-bottom: var(--space-md);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .site-title {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+  flex: none;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .site-title-icon {
@@ -149,15 +155,37 @@ select {
 .site-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: clamp(0.5rem, 0.1rem + 1.1vw, var(--space-md));
+  min-width: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   font-size: 0.92rem;
 }
 
 .site-nav a {
   color: var(--text-muted);
   padding: 0.25rem 0;
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.site-header-admin .site-title-text {
+  display: none;
+}
+
+.site-nav-separator {
+  flex: none;
+  align-self: center;
+  width: var(--separator-width);
+  height: 1.35em;
+  background: var(--separator);
+}
+
+@media (max-width: 900px) {
+  .site-title-text {
+    display: none;
+  }
 }
 
 .site-nav a:hover,
@@ -774,7 +802,7 @@ details[open] .chevron {
 
 .version-body {
   padding: 0 var(--space-md) 1.1rem var(--space-md);
-  border-top: 1px solid var(--line-strong);
+  border-top: var(--separator-width) solid var(--separator);
   background: var(--surface-sunken);
   box-shadow: var(--shadow-inset);
 }
@@ -1083,7 +1111,7 @@ details[open] .chevron {
 .issue-reference-preview .issue-reference-author {
   margin: 0.8rem 0 0;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--line);
+  border-top: var(--separator-width) solid var(--separator);
 }
 
 .issue-reference-popup {
@@ -2148,7 +2176,7 @@ details[open] .chevron {
 }
 
 .site-footer {
-  border-top: 1px solid var(--line-strong);
+  border-top: var(--separator-width) solid var(--separator);
   min-height: 56px;
   padding: var(--space-sm) 0;
   background: linear-gradient(180deg, #1a1a1a, #121212);
@@ -2382,7 +2410,7 @@ details[open] .chevron {
 .issue-detail-head {
   margin: 8px 0 18px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: var(--separator-width) solid var(--separator);
 }
 
 .issue-detail-head .issue-row-head {
@@ -2463,7 +2491,7 @@ details[open] .chevron {
 
 .comment-actions { display: flex; gap: 8px; margin-top: 8px; }
 
-.comment-replies { list-style: none; margin: 10px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.comment-replies { list-style: none; margin: 10px 0 0; padding: 0 0 0 14px; border-left: var(--separator-width) solid var(--separator); display: flex; flex-direction: column; gap: 10px; }
 .comment-reply { background: var(--surface-sunken); }
 
 .comment-composer { margin-top: 8px; }
@@ -2640,7 +2668,7 @@ details[open] .chevron {
   gap: 0.5rem;
   margin-top: 0.6rem;
   padding-top: 0.55rem;
-  border-top: 1px solid var(--line);
+  border-top: var(--separator-width) solid var(--separator);
   font-size: 0.8rem;
 }
 
@@ -2748,7 +2776,7 @@ details[open] .chevron {
   gap: var(--space-sm);
   margin-top: var(--space-sm);
   padding-top: var(--space-sm);
-  border-top: 1px solid var(--line);
+  border-top: var(--separator-width) solid var(--separator);
 }
 
 .queue-count {
@@ -2817,7 +2845,7 @@ details[open] .chevron {
   order: 3;
   margin-top: 0.5rem;
   padding-top: 0.7rem;
-  border-top: 1px dashed var(--line-strong);
+  border-top: var(--separator-width) dashed var(--separator);
 }
 
 .label-picker-list {
@@ -3142,7 +3170,7 @@ input[type="checkbox"]:not([role="switch"]):disabled {
 .issue-comments {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
-  border-top: 1px solid var(--line);
+  border-top: var(--separator-width) solid var(--separator);
 }
 
 .issue-comments .comment-list { margin-bottom: 10px; }
