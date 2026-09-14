@@ -1,0 +1,53 @@
+.mod-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 20px 0 18px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.mod-tab {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.mod-tab:hover { color: var(--text); border-color: var(--line); }
+
+.mod-tab.active {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mod-tab-panel { margin-bottom: 30px; }
+
+.discussion-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.discussion-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.discussion-title { flex: 1; min-width: 180px; color: var(--text); text-decoration: none; }
+.discussion-title:hover { color: var(--accent); }
+.discussion-comments { color: var(--text-muted); font-size: 12px; }
+.discussion-time { color: var(--text-faint); font-size: 12px; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .mod-tab { font-size: 13px; padding: 5px 10px; }
+}

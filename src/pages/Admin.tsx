@@ -12,6 +12,7 @@ import IssueEditForm from "../components/IssueEditForm";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
 import { centerAfterRender } from "../lib/centerScroll";
+import { supabase } from "../lib/supabase";
 
 export default function Admin({ submissionsOnly = false }: { submissionsOnly?: boolean }) {
   const { isStaff, loading: authLoading } = useAuth();
@@ -40,6 +41,20 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   }, [versionTarget, editingVersion]);
 
   useEffect(() => { if (isStaff) { loadMods(); fetchPendingIssues().then(setPendingIssues).catch((e) => setError(e.message)); } }, [isStaff]);
+
+  useEffect(() => {
+    if (!isStaff) return;
+    const channel = supabase
+      .channel("admin-issues")
+      .on("postgres_changes", { event: "*", schema: "public", table: "issues" }, () => {
+        fetchPendingIssues().then(setPendingIssues).catch(() => undefined);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "issue_comments" }, () => {
+        fetchPendingIssues().then(setPendingIssues).catch(() => undefined);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isStaff]);
 
   const loadMods = () => {
     setLoading(true);
