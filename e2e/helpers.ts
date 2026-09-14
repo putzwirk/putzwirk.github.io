@@ -9,9 +9,9 @@ export function uniqueTitle(prefix: string): string {
 
 export async function signInAsAdmin(page: Page): Promise<void> {
   await page.goto("/lucidblocks/login");
-  await page.getByLabel("Email").fill(adminCredentials.email ?? "");
-  await page.getByLabel("Password").fill(adminCredentials.password ?? "");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.locator('input[type="email"]').fill(adminCredentials.email ?? "");
+  await page.locator('input[type="password"]').fill(adminCredentials.password ?? "");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Manage Mods" })).toBeVisible();
 }
 

@@ -5,7 +5,7 @@ export default function Landing() {
     <div className="landing">
       <h1>Putzwirk's public page</h1>
       <Link className="btn btn-accent btn-lg" to="/lucidblocks/mods">
-        <img className="btn-icon" src="/lucid_blocks.ico" alt="" />
+        <img className="btn-icon" src="/lucid_blocks-64.png" alt="" width={22} height={22} />
         Lucid blocks modding
       </Link>
     </div>

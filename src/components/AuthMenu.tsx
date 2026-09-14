@@ -81,7 +81,6 @@ export default function AuthMenu() {
         <button className="btn btn-accent btn-sm auth-discord-btn" type="button" onClick={handleDiscord} disabled={busy}>
           {busy ? "Opening…" : "Sign in with Discord"}
         </button>
-        <Link className="auth-staff-link" to="/lucidblocks/login">Staff sign in</Link>
         {error && <span className="auth-error auth-error-floating" role="alert">{error}</span>}
       </div>
     );

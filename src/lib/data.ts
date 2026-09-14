@@ -181,6 +181,7 @@ export async function fetchIssuesByMod(modId: string): Promise<Issue[]> {
     .from("issues")
     .select("*")
     .eq("mod_id", modId)
+    .neq("moderation_status", "rejected")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -193,6 +194,7 @@ export async function fetchIdeas(): Promise<Issue[]> {
     .from("issues")
     .select("*")
     .eq("type", "idea")
+    .neq("moderation_status", "rejected")
     .is("deleted_at", null)
     .order("votes", { ascending: false })
     .order("created_at", { ascending: false });
@@ -273,6 +275,12 @@ export async function deleteIssue(id: string): Promise<void> {
 
 export async function fetchPendingIssues(): Promise<Issue[]> {
   const { data, error } = await supabase.from("issues").select("*").eq("moderation_status", "pending").is("deleted_at", null).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as Issue[];
+}
+
+export async function fetchRejectedIssues(): Promise<Issue[]> {
+  const { data, error } = await supabase.from("issues").select("*").eq("moderation_status", "rejected").is("deleted_at", null).order("created_at", { ascending: false });
   if (error) throw error;
   return data as Issue[];
 }

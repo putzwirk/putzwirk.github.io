@@ -1,4 +1,4 @@
-import { bubbleBearConfig } from "../components/BubbleBears";
+import { bubbleBearConfig } from "./bearConfig";
 import type { BearSettings } from "../components/SettingsPopover";
 
 const STORAGE_KEY = "lucidblocks-bear-settings";

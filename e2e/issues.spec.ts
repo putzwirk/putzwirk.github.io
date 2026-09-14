@@ -56,4 +56,47 @@ test.describe.serial("issue moderation and discussion", () => {
     await commentItem.getByRole("button", { name: "Reply", exact: true }).click();
     await expect(page.getByText(replyBody)).toBeVisible();
   });
+
+  test("an idea can be discussed inline from the Ideas page", async ({ page }) => {
+    await signInAsAdmin(page);
+    await page.goto("/lucidblocks/ideas");
+
+    const rows = page.locator("li.issue-row");
+    await expect(rows.nth(1)).toBeVisible();
+    const firstRow = rows.nth(0);
+    const secondRow = rows.nth(1);
+    const countOf = async (row: typeof firstRow) => {
+      const text = (await row.locator("button.comment-toggle").textContent()) ?? "";
+      const match = text.match(/(\d+)\s+comment/);
+      return match ? Number(match[1]) : 0;
+    };
+
+    const firstCount = await countOf(firstRow);
+    await firstRow.locator("button.comment-toggle").click();
+
+    const body = uniqueTitle("E2E idea comment");
+    const section = firstRow.locator(".issue-comments");
+    await section.getByPlaceholder(/^Comment on/).fill(body);
+    await section.getByRole("button", { name: "Comment", exact: true }).click();
+    await expect(section.locator(".comment").filter({ hasText: body })).toBeVisible();
+    await expect(firstRow.locator("button.comment-toggle")).toHaveAttribute("aria-expanded", "true");
+    await expect.poll(() => countOf(firstRow)).toBe(firstCount + 1);
+
+    const secondCount = await countOf(secondRow);
+    await secondRow.locator("button.comment-toggle").click();
+    const secondSection = secondRow.locator(".issue-comments");
+    await expect(secondSection).toBeVisible();
+    await expect(section).toBeVisible();
+
+    const secondBody = uniqueTitle("E2E second idea comment");
+    await secondSection.getByPlaceholder(/^Comment on/).fill(secondBody);
+    await secondSection.getByRole("button", { name: "Comment", exact: true }).click();
+    await expect(secondSection.locator(".comment").filter({ hasText: secondBody })).toBeVisible();
+    await expect(section.locator(".comment").filter({ hasText: body })).toBeVisible();
+    await expect.poll(() => countOf(secondRow)).toBe(secondCount + 1);
+
+    await firstRow.locator("button.comment-toggle").click();
+    await expect(section).toHaveCount(0);
+    await expect(secondSection).toBeVisible();
+  });
 });

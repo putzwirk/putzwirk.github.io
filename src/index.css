@@ -3022,6 +3022,49 @@ details[open] .chevron {
 
 .issue-comment-link:hover { text-decoration: underline; }
 
+.comment-toggle {
+  padding: 0.35rem 0.2rem;
+  margin: -0.35rem -0.2rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.comment-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+.comment-toggle.open {
+  color: var(--accent-hover);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.issue-comments {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.issue-comments .comment-list { margin-bottom: 10px; }
+
+.issue-comments .load-state { margin: 0 0 10px; }
+
+.issue-comments .comments-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.issue-comments .comments-error .form-error { margin: 0; }
+
 .auth-menu {
   position: relative;
   padding-bottom: 0.5rem;
@@ -3191,7 +3234,8 @@ details[open] .chevron {
   margin: 0 0 var(--space-md);
 }
 
-.staff-view-nav a {
+.staff-view-nav a,
+.staff-view-nav button {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -3200,18 +3244,22 @@ details[open] .chevron {
   border-radius: var(--radius-sm);
   background: linear-gradient(180deg, var(--surface-raised), var(--surface));
   color: var(--text-muted);
+  font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.staff-view-nav a:hover {
+.staff-view-nav a:hover,
+.staff-view-nav button:hover {
   color: var(--text);
   border-color: var(--text-muted);
 }
 
-.staff-view-nav a.active {
+.staff-view-nav a.active,
+.staff-view-nav button.active {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-soft);

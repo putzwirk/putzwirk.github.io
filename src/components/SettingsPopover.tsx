@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { bubbleBearConfig, supportsBubbleBearRenderer } from "./BubbleBears";
+import { bubbleBearConfig, supportsBubbleBearRenderer } from "../lib/bearConfig";
 import { saveBearSettings } from "../lib/bearSettings";
 
 export interface BearSettings {

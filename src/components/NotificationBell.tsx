@@ -44,24 +44,32 @@ export default function NotificationBell() {
       .finally(() => setLoading(false));
   }, [session]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     refreshCount();
+    if (openRef.current) refreshItems();
+  }, [refreshCount, refreshItems]);
+
+  useEffect(() => {
+    refresh();
     if (!session) return;
-    const timer = window.setInterval(refreshCount, 30000);
-    return () => window.clearInterval(timer);
-  }, [session, refreshCount]);
+    const onFocus = () => refresh();
+    const onVisibility = () => { if (!document.hidden) refresh(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [session, refresh]);
 
   useEffect(() => {
     if (!session) return;
     const channel = supabase
       .channel(`notifications-${session.user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${session.user.id}` }, () => {
-        refreshCount();
-        if (openRef.current) refreshItems();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${session.user.id}` }, refresh)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [session, refreshCount, refreshItems]);
+  }, [session, refresh]);
 
   useEffect(() => {
     if (!open) return;
@@ -117,7 +125,7 @@ export default function NotificationBell() {
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
         onClick={toggleOpen}
       >
-        <span aria-hidden="true">🔔</span>
+        <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></span>
         {unread > 0 && <span className="notification-badge">{unread > 9 ? "9+" : unread}</span>}
       </button>
       <div className="notification-popover" aria-hidden={!open}>
