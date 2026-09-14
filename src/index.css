@@ -3007,3 +3007,17 @@ details[open] .chevron {
     height: 60px;
   }
 }
+
+.download-latest-btn {
+  font-size: 15px;
+  padding: 11px 20px;
+  font-weight: 600;
+}
+
+.issue-comment-link {
+  color: var(--link);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.issue-comment-link:hover { text-decoration: underline; }

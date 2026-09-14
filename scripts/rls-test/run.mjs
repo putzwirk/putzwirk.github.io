@@ -232,6 +232,28 @@ const checks = [
     ok: (r) => r.rows[0].inserted === null && Number(r.rows[0].count) === 2,
   },
   {
+    name: "trust: a contributor with an approved issue is trusted",
+    run: () => as("service_role", "anon", "select public.is_trusted_contributor('22222222-2222-2222-2222-222222222222') as t"),
+    ok: (r) => !r.error && r.rows[0].t === true,
+  },
+  {
+    name: "trust: a pending-only contributor is not trusted",
+    run: () => as("service_role", "anon", "select public.is_trusted_contributor('33333333-3333-3333-3333-333333333333') as t"),
+    ok: (r) => !r.error && r.rows[0].t === false,
+  },
+  {
+    name: "trust: two approved comments grant trust",
+    run: async () => {
+      const uid = "44444444-4444-4444-4444-444444444444";
+      const before = await as("service_role", "anon", `select public.is_trusted_contributor('${uid}') as t`);
+      await as("service_role", "anon", `insert into public.issue_comments (issue_id, author_id, author_name, body, moderation_status, moderated_at) values ('bbbbbbbb-0000-0000-0000-000000000001','${uid}','Regular','first','approved', now())`);
+      await as("service_role", "anon", `insert into public.issue_comments (issue_id, author_id, author_name, body, moderation_status, moderated_at) values ('bbbbbbbb-0000-0000-0000-000000000001','${uid}','Regular','second','approved', now())`);
+      const after = await as("service_role", "anon", `select public.is_trusted_contributor('${uid}') as t`);
+      return { rows: [{ before: before.rows[0]?.t, after: after.rows[0]?.t }], affected: 0, error: before.error || after.error };
+    },
+    ok: (r) => !r.error && r.rows[0].before === false && r.rows[0].after === true,
+  },
+  {
     name: "2.4: a recipient can read their own notifications",
     run: () => as("authenticated", "member", "select count(*)::int c from public.notifications where id = 'ffffffff-0000-0000-0000-000000000001'"),
     ok: (r) => !r.error && Number(r.rows[0].c) === 1,

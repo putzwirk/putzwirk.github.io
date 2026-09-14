@@ -233,6 +233,7 @@ export async function fetchOpenIssueCounts(): Promise<Record<string, number>> {
 export async function createIssue(
   issue: Pick<Issue, "mod_id" | "type" | "title" | "description" | "author_name"> & { attachments?: File[] }
 ): Promise<Issue> {
+  await ensureSession();
   const issueId = crypto.randomUUID();
   const uploads = await uploadIssueAttachments(issueId, issue.attachments ?? []);
   const created = await invokeOrThrow<{ issue: Issue }>("submit-issue", {
@@ -330,6 +331,8 @@ export async function fetchComments(issueId: string): Promise<IssueComment[]> {
 }
 
 export async function createComment(issueId: string, body: string, authorName: string, parentId: string | null = null): Promise<IssueComment> {
+  const session = await ensureSession();
+  if (!session) throw new Error("Could not start a session to comment.");
   const result = await invokeOrThrow<{ comment: IssueComment }>("submit-comment", {
     issue_id: issueId,
     body,

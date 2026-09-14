@@ -48,7 +48,7 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
                   <IssueStateBadge state={issue.state} />
                   <span>by {issue.author_name}</span>
                   <span>{formatDateTime(issue.created_at)}</span>
-                  {(issue.comment_count ?? 0) > 0 && <span>{issue.comment_count} comment{issue.comment_count === 1 ? "" : "s"}</span>}
+                  <Link className="issue-comment-link" to={`/lucidblocks/issues/${issue.id}`}>{(issue.comment_count ?? 0) > 0 ? `${issue.comment_count} comment${issue.comment_count === 1 ? "" : "s"}` : "Comment"}</Link>
                   {issue.status === "closed" && <span>closed</span>}
                   {(isAdmin || isLocal) && (
                     <div className="issue-actions">

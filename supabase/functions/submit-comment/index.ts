@@ -61,14 +61,18 @@ Deno.serve(async (req) => {
   }
 
   const authorName = (parsed.value.author_name?.trim() || defaultAuthorName(actor)).slice(0, 40) || "Anonymous";
-  const autoApproved = actor.isStaff || !actor.isAnonymous;
-  let moderationStatus = autoApproved ? "approved" : "pending";
+  let moderationStatus: "pending" | "approved" | "rejected" = "pending";
   let moderationReason: string | null = null;
-  if (!autoApproved) {
+  if (actor.isStaff) {
+    moderationStatus = "approved";
+  } else {
     const { data: blocked } = await service.rpc("text_is_blocked", { p_text: `${parsed.value.body} ${authorName}` });
     if (blocked === true) {
       moderationStatus = "rejected";
       moderationReason = "Blocked by automatic content moderation";
+    } else {
+      const { data: trusted } = await service.rpc("is_trusted_contributor", { p_user_id: actor.id });
+      if (trusted === true) moderationStatus = "approved";
     }
   }
 
@@ -82,7 +86,7 @@ Deno.serve(async (req) => {
       body: parsed.value.body,
       moderation_status: moderationStatus,
       moderation_reason: moderationReason,
-      moderated_at: autoApproved || moderationStatus === "rejected" ? new Date().toISOString() : null,
+      moderated_at: moderationStatus === "pending" ? null : new Date().toISOString(),
     })
     .select("*")
     .single();
