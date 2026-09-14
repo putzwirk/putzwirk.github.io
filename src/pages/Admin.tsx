@@ -54,7 +54,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
       {editingIssue && <IssueEditForm issue={editingIssue} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingIssue.id, title, description, attachmentUrls, newAttachments); setPendingIssues((items) => items.map((item) => item.id === editingIssue.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingIssue(null); }} onCancel={() => setEditingIssue(null)} />}
       {!submissionsPage && <>
       {showModForm && (
-        <ModForm mod={editingMod} onSubmit={async (data) => { if (editingMod) { await updateMod(editingMod.id, data); } else { await createMod(data); } setShowModForm(false); setEditingMod(null); loadMods(); }} onCancel={() => { setShowModForm(false); setEditingMod(null); }} />
+        <ModForm mod={editingMod} availableMods={mods} onSubmit={async (data) => { if (editingMod) { await updateMod(editingMod.id, data); } else { await createMod(data); } setShowModForm(false); setEditingMod(null); loadMods(); }} onCancel={() => { setShowModForm(false); setEditingMod(null); }} />
       )}
       {versionTarget && !editingVersion && (
         <VersionForm modId={versionTarget} onSubmit={async (versionData, file) => { await createVersion(versionData, file!); setVersionTarget(null); loadMods(); }} onCancel={() => setVersionTarget(null)} />

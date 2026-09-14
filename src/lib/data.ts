@@ -15,7 +15,10 @@ export async function fetchModsWithVersions(): Promise<ModWithVersions[]> {
   if (error) throw error;
   const mods = (data as ModWithVersions[]) ?? [];
   for (const mod of mods) {
-    mod.mod_versions.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());
+    mod.mod_versions.sort((a, b) => {
+      const releaseOrder = new Date(b.release_date).getTime() - new Date(a.release_date).getTime();
+      return releaseOrder || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   }
   return mods;
 }
@@ -30,9 +33,10 @@ export async function fetchModById(id: string): Promise<ModWithVersions | null> 
   if (error) throw error;
   if (!data) return null;
   const mod = data as ModWithVersions;
-  mod.mod_versions.sort(
-    (a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
-  );
+  mod.mod_versions.sort((a, b) => {
+    const releaseOrder = new Date(b.release_date).getTime() - new Date(a.release_date).getTime();
+    return releaseOrder || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
   return mod;
 }
 

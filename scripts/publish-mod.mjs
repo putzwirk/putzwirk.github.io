@@ -36,7 +36,7 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!args.pck) {
-  console.error("Usage: npm run publish -- <file.pck> --version <x> --game-version <y> [--mod-id X] [--name N] [--tagline T] [--changelog line] [--release-date YYYY-MM-DD]");
+  console.error("Usage: npm run publish -- <file.pck> --version <x> --game-version <y> [--mod-id X] [--name N] [--tagline T] [--changelog line] [--release-date YYYY-MM-DD] [--requires QualiaMods,OtherMod]");
   process.exit(1);
 }
 if (!supabaseUrl || !serviceRoleKey) {
@@ -63,11 +63,21 @@ const storagePath = `${modId}/${pckFilename}`;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 const fileBuffer = await readFile(args.pck);
 
+const requiresFlag = args.requires ?? args["required-mods"] ?? args.requiredMods;
+let requiredMods;
+if (typeof requiresFlag === "string") {
+  requiredMods = requiresFlag.split(",").map((slug) => slug.trim()).filter(Boolean);
+} else {
+  const { data: existing } = await supabase.from("mods").select("required_mods").eq("id", modId).maybeSingle();
+  requiredMods = existing?.required_mods ?? (modId === "QualiaMods" ? [] : ["QualiaMods"]);
+}
+
 const { error: modError } = await supabase.from("mods").upsert({
   id: modId,
   name,
   tagline,
   issue_label: toSlug(modId),
+  required_mods: requiredMods,
 }, { onConflict: "id" });
 
 if (modError) {

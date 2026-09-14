@@ -6,6 +6,7 @@ export interface Mod {
   author: string;
   issue_label: string;
   sort_order: number;
+  required_mods: string[];
   created_at: string;
 }
 

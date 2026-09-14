@@ -1,15 +1,16 @@
 import { useRef, useState } from "react";
-import type { ModWithVersions } from "../types";
+import type { Mod, ModWithVersions } from "../types";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
 import MarkdownToolbar from "./MarkdownToolbar";
 
 interface Props {
   mod: ModWithVersions | null;
-  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number }) => Promise<void>;
+  availableMods: Mod[];
+  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number; required_mods: string[] }) => Promise<void>;
   onCancel: () => void;
 }
 
-export default function ModForm({ mod, onSubmit, onCancel }: Props) {
+export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Props) {
   const [id, setId] = useState(mod?.id ?? "");
   const [name, setName] = useState(mod?.name ?? "");
   const [tagline, setTagline] = useState(mod?.tagline ?? "");
@@ -18,22 +19,28 @@ export default function ModForm({ mod, onSubmit, onCancel }: Props) {
   const [author, setAuthor] = useState(mod?.author ?? "Putzwirk");
   const [issueLabel, setIssueLabel] = useState(mod?.issue_label ?? "");
   const [sortOrder, setSortOrder] = useState(mod?.sort_order ?? 0);
+  const [requiredMods, setRequiredMods] = useState<string[]>(() => {
+    if (mod) return mod.required_mods ?? [];
+    return ["QualiaMods"];
+  });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
+  const options = availableMods.filter((candidate) => candidate.id !== mod?.id);
+  const toggleDependency = (slug: string) => {
+    setRequiredMods((current) => current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]);
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder });
+      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder, required_mods: requiredMods });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }
   };
-
   return (
     <form className="panel" onSubmit={handleSubmit}>
       <h2>{mod ? "Edit Mod" : "New Mod"}</h2>
@@ -54,6 +61,21 @@ export default function ModForm({ mod, onSubmit, onCancel }: Props) {
       <div className="form-group">
         <label>Author</label>
         <input className="form-input" value={author} onChange={(e) => setAuthor(e.target.value)} required placeholder="Putzwirk" maxLength={80} />
+      </div>
+      <div className="form-group">
+        <label>Required dependencies</label>
+        <div className="dependency-listbox" role="group" aria-label="Required dependencies">
+          {options.length === 0 && <span className="empty-state">No other mods available.</span>}
+          {options.map((candidate) => {
+            const checked = requiredMods.includes(candidate.id);
+            return (
+              <label key={candidate.id} className={checked ? "dependency-option selected" : "dependency-option"}>
+                <input type="checkbox" checked={checked} onChange={() => toggleDependency(candidate.id)} />
+                <span className="dependency-name">{candidate.name}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
       <div className="form-group">
         <div className="description-head">

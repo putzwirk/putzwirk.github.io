@@ -1811,6 +1811,90 @@ details[open] .chevron {
   box-shadow: 0 0 14px rgba(242, 177, 52, 0.3);
 }
 
+.requires-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.25rem 0.2rem 0.5rem;
+  border: 1px solid var(--text);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+
+.dependency-label {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+.dependency-btn {
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  border-color: var(--accent-deep);
+  border-radius: 999px;
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+}
+
+.dependency-btn:hover {
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  border-color: var(--accent-hover);
+  color: var(--accent-text);
+  box-shadow: 0 0 14px rgba(242, 177, 52, 0.45);
+}
+
+.dependency-listbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-inset);
+}
+
+.dependency-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dependency-option:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-raised);
+}
+
+.dependency-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dependency-option input {
+  accent-color: var(--accent);
+}
+
+.dependency-slug {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.dependency-name {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .report-btn {
   background: transparent;
   border-color: var(--text);
