@@ -43,6 +43,7 @@ export interface Issue {
   deleted_at?: string | null;
   attachment_urls: string[];
   moderation_status?: "pending" | "approved" | "rejected";
+  moderation_reason?: string | null;
 }
 
 export interface IssueComment {

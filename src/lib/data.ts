@@ -339,6 +339,39 @@ export async function fetchIssueLabels(issueId: string): Promise<Label[]> {
   return (data ?? []).map((row: { labels: Label | Label[] }) => Array.isArray(row.labels) ? row.labels[0] : row.labels).filter((label): label is Label => Boolean(label));
 }
 
+export async function createLabel(name: string, color: string): Promise<Label> {
+  const { data, error } = await supabase.from("labels").insert({ name: name.trim(), color }).select("*").single();
+  if (error) throw error;
+  return data as Label;
+}
+
+export async function setIssueLabels(issueId: string, labelIds: string[]): Promise<void> {
+  const { error: deleteError } = await supabase.from("issue_labels").delete().eq("issue_id", issueId);
+  if (deleteError) throw deleteError;
+  if (labelIds.length === 0) return;
+  const { error: insertError } = await supabase
+    .from("issue_labels")
+    .insert(labelIds.map((labelId) => ({ issue_id: issueId, label_id: labelId })));
+  if (insertError) throw insertError;
+}
+
+export async function fetchIssueLabelsForIssues(issueIds: string[]): Promise<Record<string, Label[]>> {
+  if (issueIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from("issue_labels")
+    .select("issue_id, labels(id, name, color, scope)")
+    .in("issue_id", issueIds);
+  if (error) throw error;
+  const grouped: Record<string, Label[]> = {};
+  for (const row of (data ?? []) as Array<{ issue_id: string; labels: Label | Label[] | null }>) {
+    const label = Array.isArray(row.labels) ? row.labels[0] : row.labels;
+    if (!label) continue;
+    if (!grouped[row.issue_id]) grouped[row.issue_id] = [];
+    grouped[row.issue_id].push(label);
+  }
+  return grouped;
+}
+
 export function subscribeToIssue(issueId: string, onChange: () => void): () => void {
   const channel = supabase
     .channel(`issue-${issueId}`)

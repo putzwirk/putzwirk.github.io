@@ -108,6 +108,12 @@ export default function IssueDetail() {
             <button className={`vote-btn ${voted ? "voted" : ""}`} type="button" onClick={handleVote}>↑ {issue.votes} {voted ? "voted" : "vote"}</button>
           )}
         </div>
+        {issue.moderation_reason && (
+          <p className="moderation-note">
+            <span className="moderation-note-label">Moderation note</span>
+            <span>{issue.moderation_reason}</span>
+          </p>
+        )}
         {isStaff && (
           <div className="issue-detail-staff">
             <label className="issue-detail-state">
@@ -140,8 +146,9 @@ export default function IssueDetail() {
               <li key={event.id} className="event-row">
                 <span className="event-dot" aria-hidden="true" />
                 <span className="event-text">
+                  {event.actor_name && <b className="event-actor">{event.actor_name}{" "}</b>}
                   {event.event === "state_change" && <>changed state from <b>{issueStateLabel(event.from_state as IssueState)}</b> to <b>{issueStateLabel(event.to_state as IssueState)}</b></>}
-                  {event.event === "moderation" && <>moderated this issue</>}
+                  {event.event === "moderation" && <>moderated this issue{issue.moderation_reason && <span className="event-reason"> — {issue.moderation_reason}</span>}</>}
                   {event.event === "fixed_in" && <>marked this as fixed in a version</>}
                 </span>
                 <span className="event-time">{formatDateTime(event.created_at)}</span>

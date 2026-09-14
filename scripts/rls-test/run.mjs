@@ -164,6 +164,30 @@ const checks = [
     ok: (r) => !r.error && r.rows[0]?.public === false,
   },
   {
+    name: "P4: duplicate (mod_id, version) is rejected",
+    run: () => as("service_role", "anon", "insert into public.mod_versions (mod_id, version, game_version, release_date, pck_filename, storage_path) values ('ModA', '1.0.0', '4.0', '2026-01-01', 'dup.pck', 'mods/ModA/1.0.0/dup.pck')"),
+    ok: (r) => Boolean(r.error),
+  },
+  {
+    name: "P4: mod tags are readable and seeded",
+    run: () => as("anon", "anon", "select tags from public.mods where id = 'ModA'"),
+    ok: (r) => !r.error && Array.isArray(r.rows[0]?.tags) && r.rows[0].tags.includes("inventory"),
+  },
+  {
+    name: "P4: the mod-assets bucket is public",
+    run: () => as("anon", "anon", "select public from storage.buckets where id = 'mod-assets'"),
+    ok: (r) => !r.error && r.rows[0]?.public === true,
+  },
+  {
+    name: "P4: only staff can upload mod assets",
+    run: async () => {
+      const anonTry = await as("anon", "anon", "insert into storage.objects (bucket_id, name) values ('mod-assets', 'ModA/banner.png')");
+      const memberTry = await as("authenticated", "member", "insert into storage.objects (bucket_id, name) values ('mod-assets', 'ModA/banner.png')");
+      return { rows: [{ anon: Boolean(anonTry.error), member: Boolean(memberTry.error) }], affected: 0, error: null };
+    },
+    ok: (r) => r.rows[0].anon === true && r.rows[0].member === true,
+  },
+  {
     name: "D5: anon sees only approved comments",
     run: () => as("anon", "anon", "select count(*)::int c from public.issue_comments"),
     ok: (r) => !r.error && Number(r.rows[0].c) === 1,

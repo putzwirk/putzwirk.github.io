@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 function parseArgs(argv) {
@@ -36,7 +37,7 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!args.pck) {
-  console.error("Usage: npm run publish -- <file.pck> --version <x> --game-version <y> [--mod-id X] [--name N] [--tagline T] [--changelog line] [--release-date YYYY-MM-DD] [--requires QualiaMods,OtherMod]");
+  console.error("Usage: npm run publish -- <file.pck> --version <x> --game-version <y> [--mod-id X] [--name N] [--tagline T] [--changelog line] [--release-date YYYY-MM-DD] [--requires QualiaMods,OtherMod] [--tags a,b] [--channel stable|beta]");
   process.exit(1);
 }
 if (!supabaseUrl || !serviceRoleKey) {
@@ -59,9 +60,11 @@ const tagline = args.tagline || "";
 const releaseDate = args["release-date"] || args.releaseDate || new Date().toISOString().slice(0, 10);
 const changelog = args.changelog.length > 0 ? args.changelog : ["Published build."];
 const pckFilename = path.basename(args.pck);
-const storagePath = `${modId}/${pckFilename}`;
+const channel = args.channel === "beta" ? "beta" : "stable";
+const storagePath = `mods/${modId}/${version}/${pckFilename}`;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 const fileBuffer = await readFile(args.pck);
+const checksum = createHash("sha256").update(fileBuffer).digest("hex");
 
 const requiresFlag = args.requires ?? args["required-mods"] ?? args.requiredMods;
 let requiredMods;
@@ -72,12 +75,16 @@ if (typeof requiresFlag === "string") {
   requiredMods = existing?.required_mods ?? (modId === "QualiaMods" ? [] : ["QualiaMods"]);
 }
 
+const tagsFlag = args.tags;
+const tags = typeof tagsFlag === "string" ? tagsFlag.split(",").map((tag) => tag.trim()).filter(Boolean) : null;
+
 const { error: modError } = await supabase.from("mods").upsert({
   id: modId,
   name,
   tagline,
   issue_label: toSlug(modId),
   required_mods: requiredMods,
+  ...(tags ? { tags } : {}),
 }, { onConflict: "id" });
 
 if (modError) {
@@ -92,7 +99,7 @@ if (uploadError) {
   process.exit(1);
 }
 
-const { error: versionError } = await supabase.from("mod_versions").insert({
+const { error: versionError } = await supabase.from("mod_versions").upsert({
   mod_id: modId,
   version,
   game_version: gameVersion,
@@ -100,11 +107,15 @@ const { error: versionError } = await supabase.from("mod_versions").insert({
   changelog,
   pck_filename: pckFilename,
   storage_path: storagePath,
-});
+  checksum_sha256: checksum,
+  channel,
+  published: true,
+}, { onConflict: "mod_id,version" });
 
 if (versionError) {
   console.error(`Failed to insert version:`, versionError.message);
   process.exit(1);
 }
 
-console.log(`Published ${modId} v${version} (game ${gameVersion}) -> ${storagePath}`);
+console.log(`Published ${modId} v${version} (game ${gameVersion}, ${channel}) -> ${storagePath}`);
+console.log(`sha256 ${checksum}`);

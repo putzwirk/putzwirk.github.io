@@ -38,6 +38,7 @@ insert into public.issue_comments (id, issue_id, author_id, author_name, body, m
   ('eeeeeeee-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000005', '33333333-3333-3333-3333-333333333333', 'Anon', 'Author note on the pending idea.', 'pending', null)
 on conflict (id) do nothing;
 
+
 insert into public.notification_preferences (user_id, email_replies, email_status) values
   ('22222222-2222-2222-2222-222222222222', true, true),
   ('33333333-3333-3333-3333-333333333333', false, true)
@@ -47,3 +48,7 @@ insert into public.notifications (id, recipient_id, kind, issue_id, comment_id, 
   ('ffffffff-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'comment', 'bbbbbbbb-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000002', jsonb_build_object('preview', 'This one is still awaiting review.'), '2026-09-06T10:00:00Z'),
   ('ffffffff-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'moderation', 'bbbbbbbb-0000-0000-0000-000000000005', null, jsonb_build_object('status', 'pending', 'preview', 'This should be pending'), '2026-09-06T11:00:00Z')
 on conflict (id) do nothing;
+
+update public.mods set tags = array['inventory', 'ui'] where id = 'ModA';
+update public.mods set tags = array['framework', 'library'] where id = 'QualiaMods';
+update public.mods set screenshots = jsonb_build_array('mods/ModA/1.0.0/screenshot-1.png') where id = 'ModA';

@@ -1,18 +1,51 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { ModWithVersions, ModVersion } from "../types";
-import { fetchModsWithVersions, createMod, updateMod, deleteMod, createVersion, updateVersion, deleteVersion, fetchPendingIssues, moderateIssue, updateIssueContent } from "../lib/data";
-import type { Issue } from "../types";
+import type { Issue, Label, ModVersion, ModWithVersions } from "../types";
+import { createLabel, createMod, createVersion, deleteIssue, deleteMod, deleteVersion, fetchIssueLabelsForIssues, fetchLabels, fetchModsWithVersions, fetchPendingIssues, moderateIssue, setIssueLabels, updateIssueContent, updateMod, updateVersion } from "../lib/data";
 import ModForm from "../components/ModForm";
 import VersionForm from "../components/VersionForm";
 import AttachmentGallery from "../components/AttachmentGallery";
 import MarkdownText from "../components/MarkdownText";
 import IssueEditForm from "../components/IssueEditForm";
 import ConfirmDialog from "../components/ConfirmDialog";
+import QueueToolbar from "../components/QueueToolbar";
+import LabelPicker from "../components/LabelPicker";
+import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
 import { centerAfterRender } from "../lib/centerScroll";
 import { supabase } from "../lib/supabase";
+
+type TypeFilter = "all" | "bug" | "idea";
+type SortOrder = "newest" | "oldest";
+
+function RejectReasonDialog({ label, onCancel, onConfirm }: { label: string; onCancel: () => void; onConfirm: (reason: string) => void | Promise<void> }) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleConfirm = async () => {
+    setBusy(true);
+    await onConfirm(reason);
+    setBusy(false);
+  };
+
+  return (
+    <div className="confirm-dialog-backdrop" onClick={onCancel}>
+      <div className="confirm-dialog reject-dialog" onClick={(event) => event.stopPropagation()}>
+        <h2>Reject submission?</h2>
+        <p>{label}</p>
+        <label className="reject-dialog-field">
+          Reason (optional)
+          <textarea className="form-textarea" value={reason} onChange={(event) => setReason(event.target.value)} rows={3} maxLength={500} />
+        </label>
+        <div className="form-actions reject-dialog-actions">
+          <button className="btn" type="button" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button className="btn btn-danger" type="button" onClick={handleConfirm} disabled={busy}>{busy ? "Rejecting…" : "Reject"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Admin({ submissionsOnly = false }: { submissionsOnly?: boolean }) {
   const { isStaff, loading: authLoading } = useAuth();
@@ -29,6 +62,16 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [deletingMod, setDeletingMod] = useState<ModWithVersions | null>(null);
   const [deletingVersion, setDeletingVersion] = useState<ModVersion | null>(null);
+  const [labels, setLabels] = useState<Label[]>([]);
+  const [labelsByIssue, setLabelsByIssue] = useState<Record<string, Label[]>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [labelEditorId, setLabelEditorId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [modFilter, setModFilter] = useState("all");
+  const [sort, setSort] = useState<SortOrder>("newest");
+  const [rejectTarget, setRejectTarget] = useState<{ ids: string[]; label: string } | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const modFormRef = useRef<HTMLDivElement>(null);
   const versionFormRef = useRef<HTMLDivElement>(null);
 
@@ -40,25 +83,143 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
     if (versionTarget || editingVersion) centerAfterRender(versionFormRef);
   }, [versionTarget, editingVersion]);
 
-  useEffect(() => { if (isStaff) { loadMods(); fetchPendingIssues().then(setPendingIssues).catch((e) => setError(e.message)); } }, [isStaff]);
+  const loadMods = () => {
+    setLoading(true);
+    fetchModsWithVersions().then(setMods).catch((e) => setError(e.message)).finally(() => setLoading(false));
+  };
+
+  const loadQueue = useCallback(async () => {
+    const issues = await fetchPendingIssues();
+    setPendingIssues(issues);
+    setLabelsByIssue(await fetchIssueLabelsForIssues(issues.map((issue) => issue.id)));
+  }, []);
+
+  useEffect(() => {
+    if (!isStaff) return;
+    loadMods();
+    fetchLabels().then(setLabels).catch((e) => setError(e.message));
+    loadQueue().catch((e) => setError(e.message));
+  }, [isStaff, loadQueue]);
 
   useEffect(() => {
     if (!isStaff) return;
     const channel = supabase
       .channel("admin-issues")
       .on("postgres_changes", { event: "*", schema: "public", table: "issues" }, () => {
-        fetchPendingIssues().then(setPendingIssues).catch(() => undefined);
+        loadQueue().catch(() => undefined);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "issue_comments" }, () => {
-        fetchPendingIssues().then(setPendingIssues).catch(() => undefined);
+        loadQueue().catch(() => undefined);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [isStaff]);
+  }, [isStaff, loadQueue]);
 
-  const loadMods = () => {
-    setLoading(true);
-    fetchModsWithVersions().then(setMods).catch((e) => setError(e.message)).finally(() => setLoading(false));
+  const filteredIssues = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return pendingIssues
+      .filter((issue) => {
+        const matchesSearch = query === "" || issue.title.toLowerCase().includes(query) || issue.author_name.toLowerCase().includes(query);
+        const matchesType = typeFilter === "all" || issue.type === typeFilter;
+        const matchesMod = modFilter === "all" || (modFilter === "global" ? issue.mod_id === null : issue.mod_id === modFilter);
+        return matchesSearch && matchesType && matchesMod;
+      })
+      .sort((a, b) => {
+        const delta = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        return sort === "newest" ? -delta : delta;
+      });
+  }, [pendingIssues, search, typeFilter, modFilter, sort]);
+
+  const selectedIssues = filteredIssues.filter((issue) => selectedIds.has(issue.id));
+  const allSelected = filteredIssues.length > 0 && selectedIssues.length === filteredIssues.length;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allSelected) filteredIssues.forEach((issue) => next.delete(issue.id));
+      else filteredIssues.forEach((issue) => next.add(issue.id));
+      return next;
+    });
+  };
+
+  const removeIssues = (ids: string[]) => {
+    setPendingIssues((items) => items.filter((item) => !ids.includes(item.id)));
+    setSelectedIds(new Set());
+    setLabelsByIssue((previous) => {
+      const next = { ...previous };
+      for (const id of ids) delete next[id];
+      return next;
+    });
+  };
+
+  const applyModeration = async (ids: string[], status: "approved" | "rejected", reason?: string) => {
+    await Promise.all(ids.map((id) => moderateIssue(id, status, reason)));
+    removeIssues(ids);
+  };
+
+  const handleApprove = async (ids: string[]) => {
+    try {
+      await applyModeration(ids, "approved");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Approve failed.");
+    }
+  };
+
+  const handleBulkReject = () => {
+    if (selectedIssues.length === 0) return;
+    setRejectTarget({ ids: selectedIssues.map((issue) => issue.id), label: `${selectedIssues.length} selected submission${selectedIssues.length === 1 ? "" : "s"}` });
+  };
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectTarget) return;
+    try {
+      await applyModeration(rejectTarget.ids, "rejected", reason);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reject failed.");
+    }
+    setRejectTarget(null);
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = selectedIssues.map((issue) => issue.id);
+    try {
+      await Promise.all(ids.map((id) => deleteIssue(id)));
+      removeIssues(ids);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Bulk delete failed.");
+    }
+    setConfirmBulkDelete(false);
+  };
+
+  const toggleIssueLabel = async (issueId: string, label: Label) => {
+    const current = labelsByIssue[issueId] ?? [];
+    const nextIds = current.some((item) => item.id === label.id)
+      ? current.filter((item) => item.id !== label.id).map((item) => item.id)
+      : [...current.map((item) => item.id), label.id];
+    try {
+      await setIssueLabels(issueId, nextIds);
+      setLabelsByIssue((previous) => ({ ...previous, [issueId]: labels.filter((item) => nextIds.includes(item.id)) }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update labels.");
+    }
+  };
+
+  const createAndAssignLabel = async (issueId: string, name: string, color: string) => {
+    const label = await createLabel(name, color);
+    const nextLabels = [...labels.filter((item) => item.id !== label.id), label].sort((a, b) => a.name.localeCompare(b.name));
+    setLabels(nextLabels);
+    const current = labelsByIssue[issueId] ?? [];
+    const nextIds = [...current.map((item) => item.id), label.id];
+    await setIssueLabels(issueId, nextIds);
+    setLabelsByIssue((previous) => ({ ...previous, [issueId]: nextLabels.filter((item) => nextIds.includes(item.id)) }));
   };
 
   if (authLoading) return <p className="load-state">Loading</p>;
@@ -71,7 +232,79 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
         {!submissionsPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add Mod</button>}
       </div>
       {error && <div className="error-state">{error}</div>}
-      {submissionsPage && <section className="moderation-panel">{pendingIssues.map((issue) => <article className="moderation-item" key={issue.id}><div className="issue-row-content"><div className="issue-row-title">{issue.title}</div><div className="issue-row-desc"><MarkdownText text={issue.description} issues={pendingIssues} mods={mods} /></div><div className="issue-row-meta"><span>{issue.type}</span><span>by {issue.author_name}</span><span>{formatDateTime(issue.created_at)}</span></div>{issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}</div><div className="admin-controls"><button className="btn btn-sm" onClick={() => setEditingIssue(issue)}>Edit</button><button className="btn btn-accent btn-sm" onClick={async () => { await moderateIssue(issue.id, "approved"); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Approve</button><button className="btn btn-sm" onClick={async () => { await moderateIssue(issue.id, "rejected"); setPendingIssues((items) => items.filter((item) => item.id !== issue.id)); }}>Reject</button></div></article>)}</section>}
+      {submissionsPage && (
+        <>
+          <QueueToolbar
+            search={search}
+            onSearchChange={(value) => { setSearch(value); setSelectedIds(new Set()); }}
+            typeFilter={typeFilter}
+            onTypeFilterChange={(value) => { setTypeFilter(value); setSelectedIds(new Set()); }}
+            modFilter={modFilter}
+            onModFilterChange={(value) => { setModFilter(value); setSelectedIds(new Set()); }}
+            mods={mods}
+            sort={sort}
+            onSortChange={setSort}
+            resultCount={filteredIssues.length}
+            selectedCount={selectedIssues.length}
+            allSelected={allSelected}
+            onToggleSelectAll={toggleSelectAll}
+            onBulkApprove={() => handleApprove(selectedIssues.map((issue) => issue.id))}
+            onBulkReject={handleBulkReject}
+            onBulkDelete={() => setConfirmBulkDelete(true)}
+          />
+          {filteredIssues.length === 0 ? (
+            <p className="empty-state">{pendingIssues.length === 0 ? "There are no pending submissions." : "No submissions match these filters."}</p>
+          ) : (
+            <section className="moderation-panel">
+              {filteredIssues.map((issue) => (
+                <article className={`moderation-item${selectedIds.has(issue.id) ? " moderation-item-selected" : ""}`} key={issue.id}>
+                  <div className="issue-row-content">
+                    <div className="issue-row-head">
+                      <label className="queue-row-select">
+                        <input type="checkbox" checked={selectedIds.has(issue.id)} onChange={() => toggleSelect(issue.id)} aria-label={`Select ${issue.title}`} />
+                      </label>
+                      <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>
+                      <span className="issue-row-title">{issue.title}</span>
+                    </div>
+                    <div className="issue-row-desc"><MarkdownText text={issue.description} issues={pendingIssues} mods={mods} /></div>
+                    <div className="issue-row-meta">
+                      <IssueStateBadge state={issue.state} />
+                      <span>by {issue.author_name}</span>
+                      <span>{formatDateTime(issue.created_at)}</span>
+                      {issue.mod_id && <span className="chip">{mods.find((mod) => mod.id === issue.mod_id)?.name ?? issue.mod_id}</span>}
+                    </div>
+                    {(labelsByIssue[issue.id] ?? []).length > 0 && (
+                      <div className="label-chip-row">
+                        {(labelsByIssue[issue.id] ?? []).map((label) => (
+                          <span className="chip label-chip" key={label.id}>
+                            <span className="label-swatch" style={{ background: label.color }} aria-hidden="true" />
+                            {label.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}
+                  </div>
+                  <div className="admin-controls">
+                    <button className="btn btn-sm" onClick={() => setEditingIssue(issue)}>Edit</button>
+                    <button className="btn btn-sm" onClick={() => setLabelEditorId((current) => current === issue.id ? null : issue.id)}>{labelEditorId === issue.id ? "Close labels" : "Labels"}</button>
+                    <button className="btn btn-accent btn-sm" onClick={() => handleApprove([issue.id])}>Approve</button>
+                    <button className="btn btn-sm" onClick={() => setRejectTarget({ ids: [issue.id], label: issue.title })}>Reject</button>
+                  </div>
+                  {labelEditorId === issue.id && (
+                    <LabelPicker
+                      labels={labels}
+                      selectedIds={(labelsByIssue[issue.id] ?? []).map((label) => label.id)}
+                      onToggle={(labelId) => { const label = labels.find((item) => item.id === labelId); if (label) toggleIssueLabel(issue.id, label); }}
+                      onCreate={(name, color) => createAndAssignLabel(issue.id, name, color)}
+                    />
+                  )}
+                </article>
+              ))}
+            </section>
+          )}
+        </>
+      )}
       {editingIssue && <IssueEditForm issue={editingIssue} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingIssue.id, title, description, attachmentUrls, newAttachments); setPendingIssues((items) => items.map((item) => item.id === editingIssue.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingIssue(null); }} onCancel={() => setEditingIssue(null)} />}
       {!submissionsPage && <>
       {showModForm && (
@@ -128,9 +361,10 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
         </div>
       )}
       </>}
-      {submissionsPage && pendingIssues.length === 0 && <p className="empty-state">There are no pending submissions.</p>}
       {deletingMod && <ConfirmDialog title="Delete mod?" message={`Delete "${deletingMod.name}" and all its versions?`} onCancel={() => setDeletingMod(null)} onConfirm={async () => { await deleteMod(deletingMod.id); setDeletingMod(null); loadMods(); }} />}
       {deletingVersion && <ConfirmDialog title="Delete version?" message={`Delete version ${deletingVersion.version}?`} onCancel={() => setDeletingVersion(null)} onConfirm={async () => { await deleteVersion(deletingVersion); setDeletingVersion(null); loadMods(); }} />}
+      {rejectTarget && <RejectReasonDialog label={rejectTarget.label} onCancel={() => setRejectTarget(null)} onConfirm={handleRejectConfirm} />}
+      {confirmBulkDelete && <ConfirmDialog title="Delete selected submissions?" message={`Delete ${selectedIssues.length} submission${selectedIssues.length === 1 ? "" : "s"} permanently?`} onCancel={() => setConfirmBulkDelete(false)} onConfirm={handleBulkDelete} />}
     </>
   );
 }
