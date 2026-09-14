@@ -164,6 +164,88 @@ const checks = [
     ok: (r) => !r.error && r.rows[0]?.public === false,
   },
   {
+    name: "D5: anon sees only approved comments",
+    run: () => as("anon", "anon", "select count(*)::int c from public.issue_comments"),
+    ok: (r) => !r.error && Number(r.rows[0].c) === 1,
+  },
+  {
+    name: "D5: an author sees approved plus their own pending comment",
+    run: () => as("authenticated", "anonSession", "select count(*)::int c from public.issue_comments"),
+    ok: (r) => !r.error && Number(r.rows[0].c) === 2,
+  },
+  {
+    name: "D5: an author can edit their own pending comment",
+    run: () => as("authenticated", "anonSession", "update public.issue_comments set body = 'Updated note' where id = 'eeeeeeee-0000-0000-0000-000000000003'"),
+    ok: (r) => !r.error && r.affected === 1,
+  },
+  {
+    name: "D5: another member cannot edit that comment",
+    run: () => as("authenticated", "member", "update public.issue_comments set body = 'Hijacked' where id = 'eeeeeeee-0000-0000-0000-000000000003'"),
+    ok: (r) => !r.error && r.affected === 0,
+  },
+  {
+    name: "D5: clients cannot insert comments directly",
+    run: () => as("authenticated", "anonSession", "insert into public.issue_comments (issue_id, body) values ('bbbbbbbb-0000-0000-0000-000000000001', 'direct')"),
+    ok: (r) => Boolean(r.error),
+  },
+  {
+    name: "D5: comment_count stays in sync with approved comments",
+    run: () => as("anon", "anon", "select comment_count from public.issues where id = 'bbbbbbbb-0000-0000-0000-000000000001'"),
+    ok: (r) => !r.error && Number(r.rows[0].comment_count) === 1,
+  },
+  {
+    name: "D5: a reply must target a top-level comment on the same issue",
+    run: () => as("service_role", "anon", "insert into public.issue_comments (issue_id, parent_id, body, moderation_status) values ('bbbbbbbb-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000003', 'bad parent', 'approved')"),
+    ok: (r) => Boolean(r.error),
+  },
+  {
+    name: "D5: a service-side reply increments the counter",
+    run: async () => {
+      const inserted = await as("service_role", "anon", "insert into public.issue_comments (issue_id, author_id, parent_id, author_name, body, moderation_status) values ('bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'eeeeeeee-0000-0000-0000-000000000001', 'Putzwirk', 'Fixed in the next build.', 'approved')");
+      const counted = await as("anon", "anon", "select comment_count from public.issues where id = 'bbbbbbbb-0000-0000-0000-000000000001'");
+      return { rows: [{ inserted: inserted.error, count: counted.rows[0]?.comment_count }], affected: 0, error: null };
+    },
+    ok: (r) => r.rows[0].inserted === null && Number(r.rows[0].count) === 2,
+  },
+  {
+    name: "2.4: a recipient can read their own notifications",
+    run: () => as("authenticated", "member", "select count(*)::int c from public.notifications where id = 'ffffffff-0000-0000-0000-000000000001'"),
+    ok: (r) => !r.error && Number(r.rows[0].c) === 1,
+  },
+  {
+    name: "2.4: another member cannot read someone else's notifications",
+    run: () => as("authenticated", "anonSession", "select count(*)::int c from public.notifications where id = 'ffffffff-0000-0000-0000-000000000001'"),
+    ok: (r) => !r.error && Number(r.rows[0].c) === 0,
+  },
+  {
+    name: "2.4: staff cannot read another user's notifications",
+    run: () => as("authenticated", "admin", "select count(*)::int c from public.notifications where id = 'ffffffff-0000-0000-0000-000000000001'"),
+    ok: (r) => !r.error && Number(r.rows[0].c) === 0,
+  },
+  {
+    name: "2.4: clients cannot insert notifications directly",
+    run: () => as("authenticated", "member", "insert into public.notifications (recipient_id, kind) values ('22222222-2222-2222-2222-222222222222', 'comment')"),
+    ok: (r) => Boolean(r.error),
+  },
+  {
+    name: "2.4: a reply creates a reply notification for the parent author",
+    run: async () => {
+      const inserted = await as("service_role", "anon", "insert into public.issue_comments (id, issue_id, author_id, parent_id, author_name, body, moderation_status) values ('eeeeeeee-0000-0000-0000-000000000099', 'bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'eeeeeeee-0000-0000-0000-000000000001', 'Putzwirk', 'Reply for the notification test.', 'approved')");
+      const found = await as("authenticated", "member", "select count(*)::int c from public.notifications where kind = 'reply' and comment_id = 'eeeeeeee-0000-0000-0000-000000000099'");
+      return { rows: [{ inserted: inserted.error, count: found.rows[0]?.c }], affected: 0, error: inserted.error || found.error };
+    },
+    ok: (r) => !r.error && r.rows[0].inserted === null && Number(r.rows[0].count) === 1,
+  },
+  {
+    name: "2.4: a recipient can mark their notification read",
+    run: async () => {
+      const updated = await as("authenticated", "member", "update public.notifications set read_at = now() where id = 'ffffffff-0000-0000-0000-000000000001'");
+      const read = await as("authenticated", "member", "select read_at from public.notifications where id = 'ffffffff-0000-0000-0000-000000000001'");
+      return { rows: [{ read: read.rows[0]?.read_at }], affected: updated.affected, error: updated.error || read.error };
+    },
+    ok: (r) => !r.error && r.affected === 1 && r.rows[0].read !== null,
+  },
+  {
     name: "H3 fixed: forgeable vote RPC removed",
     run: () => as("anon", "anon", "select public.increment_issue_votes('bbbbbbbb-0000-0000-0000-000000000003')"),
     ok: (r) => Boolean(r.error),

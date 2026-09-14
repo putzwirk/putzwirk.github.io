@@ -2333,3 +2333,102 @@ details[open] .chevron {
   height: 22px;
   flex: none;
 }
+
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.state-open { border-color: var(--state-open); color: var(--state-open); }
+.state-needs_info { border-color: var(--accent); color: var(--accent); }
+.state-confirmed { border-color: var(--link); color: var(--link); }
+.state-in_progress { border-color: var(--accent); color: var(--accent); }
+.state-fixed { border-color: var(--success-border); color: var(--state-open); }
+.state-duplicate, .state-wontfix, .state-closed { border-color: var(--line-strong); color: var(--text-faint); }
+
+.issue-detail-head {
+  margin: 8px 0 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.issue-detail-title { margin: 8px 0 0; font-size: 26px; line-height: 1.25; }
+
+.issue-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.issue-detail-staff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.issue-detail-state { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.issue-detail-state .form-input { min-width: 160px; }
+
+.issue-detail-body { margin: 0 0 18px; }
+
+.issue-discussion, .issue-timeline { margin-top: 28px; }
+.issue-discussion h2, .issue-timeline h2 { font-size: 18px; margin-bottom: 12px; }
+
+.comment-list { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.comment {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.comment-pending { border-style: dashed; border-color: var(--line-strong); opacity: 0.85; }
+
+.comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+.comment-author { font-weight: 600; color: var(--text); }
+.comment-time { color: var(--text-faint); font-size: 12px; }
+
+.comment-body { color: var(--text-muted); }
+.comment-body p:first-child { margin-top: 0; }
+.comment-body p:last-child { margin-bottom: 0; }
+
+.comment-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+.comment-replies { list-style: none; margin: 10px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.comment-reply { background: var(--surface-sunken); }
+
+.comment-composer { margin-top: 8px; }
+.comment-composer-body { min-height: 72px; }
+.comment-composer-compact .comment-composer-body { min-height: 54px; }
+.comment-composer-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.comment-composer-name { max-width: 220px; }
+
+.event-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.event-row { display: flex; align-items: baseline; gap: 10px; color: var(--text-muted); font-size: 13px; }
+.event-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line-bold); flex: none; transform: translateY(-1px); }
+.event-text { flex: 1; }
+.event-time { color: var(--text-faint); font-size: 12px; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .issue-detail-title { font-size: 21px; }
+  .issue-detail-state .form-input { min-width: 0; width: 100%; }
+}

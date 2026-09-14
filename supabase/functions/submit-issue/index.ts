@@ -39,8 +39,16 @@ Deno.serve(async (req) => {
   }
 
   const autoApproved = Boolean(actor && (actor.isStaff || !actor.isAnonymous));
-  const moderationStatus = autoApproved ? "approved" : "pending";
   const authorName = (parsed.value.author_name?.trim() || defaultAuthorName(actor)).slice(0, 40) || "Anonymous";
+  let moderationStatus = autoApproved ? "approved" : "pending";
+  let moderationReason: string | null = null;
+  if (!autoApproved) {
+    const { data: blocked } = await service.rpc("text_is_blocked", { p_text: `${parsed.value.title} ${parsed.value.description} ${authorName}` });
+    if (blocked === true) {
+      moderationStatus = "rejected";
+      moderationReason = "Blocked by automatic content moderation";
+    }
+  }
   const attachmentUrls = parsed.value.attachment_paths.map(publicObjectUrl);
 
   const insertPayload: Record<string, unknown> = {
@@ -52,7 +60,8 @@ Deno.serve(async (req) => {
     author_id: actor?.id ?? null,
     attachment_urls: attachmentUrls,
     moderation_status: moderationStatus,
-    moderated_at: autoApproved ? new Date().toISOString() : null,
+    moderation_reason: moderationReason,
+    moderated_at: autoApproved || moderationStatus === "rejected" ? new Date().toISOString() : null,
   };
   if (parsed.value.id) insertPayload.id = parsed.value.id;
 

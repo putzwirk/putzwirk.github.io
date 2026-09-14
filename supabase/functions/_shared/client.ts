@@ -13,9 +13,14 @@ export interface StorageBucketApi {
   getPublicUrl(path: string): { data: { publicUrl: string } };
 }
 
+export interface AdminUserApi {
+  getUserById(id: string): Promise<{ data: { user: ActorUser | null }; error: { message: string } | null }>;
+}
+
 export interface SupabaseClient {
   auth: {
     getUser(jwt: string): Promise<{ data: { user: ActorUser | null }; error: { message: string } | null }>;
+    admin: AdminUserApi;
   };
   from(table: string): any;
   rpc(name: string, args?: Record<string, unknown>): Promise<{ data: any; error: { message: string } | null }>;

@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import Submissions from "./pages/Submissions";
 import Landing from "./pages/Landing";
+import IssueDetail from "./pages/IssueDetail";
 import BubbleBears from "./components/BubbleBears";
 import SettingsPopover, { BearSettings } from "./components/SettingsPopover";
 import { loadBearSettings } from "./lib/bearSettings";
@@ -66,6 +67,7 @@ function LucidLayout() {
         <Routes>
           <Route path="mods" element={<Home />} />
           <Route path="mods/:modId" element={<ModDetail />} />
+          <Route path="issues/:issueId" element={<IssueDetail />} />
           <Route path="ideas" element={<Ideas />} />
           <Route path="login" element={<Login />} />
           <Route path="admin" element={<Admin />} />

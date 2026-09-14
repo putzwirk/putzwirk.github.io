@@ -61,3 +61,29 @@ export function parseIssueInput(raw: unknown): ParseResult<IssueInput> {
     },
   };
 }
+
+export interface CommentInput {
+  issue_id: string;
+  parent_id: string | null;
+  body: string;
+  author_name: string | null;
+}
+
+export function parseCommentInput(raw: unknown): ParseResult<CommentInput> {
+  if (!raw || typeof raw !== "object") return { ok: false, error: "Invalid request body" };
+  const body = raw as Record<string, unknown>;
+
+  const issueId = asString(body.issue_id);
+  if (!issueId || !UUID_PATTERN.test(issueId)) return { ok: false, error: "invalid issue_id" };
+
+  const text = (asString(body.body) ?? "").trim();
+  if (text.length < 1 || text.length > 2000) return { ok: false, error: "body must be 1-2000 characters" };
+
+  const parentId = asString(body.parent_id);
+  if (parentId !== null && !UUID_PATTERN.test(parentId)) return { ok: false, error: "invalid parent_id" };
+
+  const authorNameRaw = asString(body.author_name);
+  if (authorNameRaw !== null && authorNameRaw.length > 40) return { ok: false, error: "author_name is too long" };
+
+  return { ok: true, value: { issue_id: issueId, parent_id: parentId, body: text, author_name: authorNameRaw } };
+}

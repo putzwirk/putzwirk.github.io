@@ -10,7 +10,7 @@
     "publish": "node scripts/publish-mod.mjs",
     "deploy": "set -a; source .env 2>/dev/null || true; npm run build && rm -rf /tmp/gh-pages-pub && cp -r dist /tmp/gh-pages-pub && git checkout gh-pages --quiet && rm -rf assets index.html && cp -r /tmp/gh-pages-pub/* . && touch .nojekyll && git add -A && git commit -m Publish --quiet && git push origin gh-pages && git checkout master --quiet",
     "test:rls": "node scripts/rls-test/run.mjs",
-    "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts",
+    "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/submit-comment/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts supabase/functions/notify/index.ts",
     "test:functions": "deno test --allow-env supabase/functions/_shared/",
     "set-admin": "node scripts/set-admin.mjs"
   },

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Issue, Mod } from "../types";
 import { fetchIdeas, fetchAllPublicIssues, fetchModsWithVersions, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +8,7 @@ import MarkdownText from "../components/MarkdownText";
 import AttachmentGallery from "../components/AttachmentGallery";
 import ConfirmDialog from "../components/ConfirmDialog";
 import IssueEditForm from "../components/IssueEditForm";
+import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
 import { centerAfterRender } from "../lib/centerScroll";
 
@@ -91,16 +93,18 @@ export default function Ideas() {
                 <div className="issue-row-content">
                   <div className="issue-row-head">
                     <span className={`type-badge ${idea.type === "bug" ? "type-bug" : "type-feature"}`}>{idea.type === "bug" ? "Bug" : "Feature"}</span>
-                    <span className="issue-row-title">{idea.title}{idea.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>
+                    <span className="issue-row-title"><Link to={`/lucidblocks/issues/${idea.id}`}>{idea.title}</Link>{idea.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>
                     {idea.mod_id && modNames.get(idea.mod_id) && <span className="chip">{modNames.get(idea.mod_id)}</span>}
                   </div>
                   {idea.description && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <div className="issue-row-desc"><MarkdownText text={idea.description} issues={ideas} /></div>}
                   {idea.attachment_urls?.length > 0 && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <AttachmentGallery urls={idea.attachment_urls} />}
                   {idea.status === "closed" && (idea.description?.trim() || (idea.attachment_urls?.length ?? 0) > 0) && <button className="btn btn-sm issue-details-toggle" onClick={() => setExpandedClosed((current) => { const next = new Set(current); if (next.has(idea.id)) next.delete(idea.id); else next.add(idea.id); return next; })}>{expandedClosed.has(idea.id) ? "Hide details" : "Show details"}</button>}
                   <div className="issue-row-meta">
+                    <IssueStateBadge state={idea.state} />
                     {idea.status === "open" && <button className={`vote-btn ${votedIds.has(idea.id) ? "voted" : ""}`} onClick={() => handleVote(idea.id)}>↑ {idea.votes} {votedIds.has(idea.id) ? "voted" : "vote"}</button>}
                     <span>by {idea.author_name}</span>
                     <span>{formatDateTime(idea.created_at)}</span>
+                    {(idea.comment_count ?? 0) > 0 && <span>{idea.comment_count} comment{idea.comment_count === 1 ? "" : "s"}</span>}
                     {idea.status === "closed" && <span>closed</span>}
                     {isStaff && (
                       <div className="issue-actions">

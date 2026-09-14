@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Issue } from "../types";
 import AttachmentGallery from "./AttachmentGallery";
 import MarkdownText from "./MarkdownText";
 import IssueEditForm from "./IssueEditForm";
+import IssueStateBadge from "./IssueStateBadge";
 import { softDeleteIssue, updateIssueContent } from "../lib/data";
 import ConfirmDialog from "./ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
@@ -37,14 +39,16 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
               <div className="issue-row-content">
                 <div className="issue-row-head">
                   <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>
-                  <span className="issue-row-title">{issue.title}{issue.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>
+                  <span className="issue-row-title"><Link to={`/lucidblocks/issues/${issue.id}`}>{issue.title}</Link>{issue.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>
                   {issue.status === "closed" && hasDetails && <button className="btn btn-sm issue-action-btn issue-details-toggle" onClick={() => setExpanded((items) => { const next = new Set(items); isExpanded ? next.delete(issue.id) : next.add(issue.id); return next; })}>{isExpanded ? "Hide details" : "Show details"}</button>}
                 </div>
                 {(issue.status === "open" || isExpanded) && issue.description && <div className="issue-row-desc"><MarkdownText text={issue.description} issues={issues} /></div>}
                 {(issue.status === "open" || isExpanded) && issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}
                 <div className="issue-row-meta">
+                  <IssueStateBadge state={issue.state} />
                   <span>by {issue.author_name}</span>
                   <span>{formatDateTime(issue.created_at)}</span>
+                  {(issue.comment_count ?? 0) > 0 && <span>{issue.comment_count} comment{issue.comment_count === 1 ? "" : "s"}</span>}
                   {issue.status === "closed" && <span>closed</span>}
                   {(isAdmin || isLocal) && (
                     <div className="issue-actions">

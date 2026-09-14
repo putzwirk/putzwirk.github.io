@@ -1,5 +1,5 @@
 import { supabase, STORAGE_BUCKET } from "./supabase";
-import type { Mod, ModVersion, Issue, ModWithVersions } from "../types";
+import type { Mod, ModVersion, Issue, IssueComment, IssueEvent, IssueState, Label, ModWithVersions } from "../types";
 import { uploadIssueAttachments } from "./issueAttachments";
 import { invokeOrThrow } from "./functions";
 import { ensureSession } from "./session";
@@ -257,4 +257,93 @@ export async function fetchMyVotes(): Promise<Set<string>> {
   const { data, error } = await supabase.from("issue_votes").select("issue_id");
   if (error) return new Set();
   return new Set((data ?? []).map((row: { issue_id: string }) => row.issue_id));
+}
+
+export interface IssueDetailData {
+  issue: Issue;
+  modName: string | null;
+}
+
+export async function fetchIssueById(id: string): Promise<IssueDetailData | null> {
+  const { data, error } = await supabase.from("issues").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const issue = data as Issue;
+  let modName: string | null = null;
+  if (issue.mod_id) {
+    const { data: mod } = await supabase.from("mods").select("name").eq("id", issue.mod_id).maybeSingle();
+    modName = (mod as { name?: string } | null)?.name ?? null;
+  }
+  return { issue, modName };
+}
+
+export async function fetchComments(issueId: string): Promise<IssueComment[]> {
+  const { data, error } = await supabase
+    .from("issue_comments")
+    .select("*")
+    .eq("issue_id", issueId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as IssueComment[];
+}
+
+export async function createComment(issueId: string, body: string, authorName: string, parentId: string | null = null): Promise<IssueComment> {
+  const result = await invokeOrThrow<{ comment: IssueComment }>("submit-comment", {
+    issue_id: issueId,
+    body,
+    author_name: authorName,
+    parent_id: parentId,
+  });
+  return result.comment;
+}
+
+export async function updateComment(id: string, body: string): Promise<void> {
+  const { error } = await supabase.from("issue_comments").update({ body }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  const { error } = await supabase.from("issue_comments").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function fetchIssueEvents(issueId: string): Promise<IssueEvent[]> {
+  const { data, error } = await supabase
+    .from("issue_events")
+    .select("*")
+    .eq("issue_id", issueId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as IssueEvent[];
+}
+
+export async function updateIssueState(id: string, state: IssueState, fixedInVersionId?: string | null): Promise<void> {
+  const payload: Record<string, unknown> = { state };
+  if (fixedInVersionId !== undefined) payload.fixed_in_version_id = fixedInVersionId;
+  const { error } = await supabase.from("issues").update(payload).eq("id", id);
+  if (error) throw error;
+}
+
+export async function fetchLabels(): Promise<Label[]> {
+  const { data, error } = await supabase.from("labels").select("*").order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Label[];
+}
+
+export async function fetchIssueLabels(issueId: string): Promise<Label[]> {
+  const { data, error } = await supabase
+    .from("issue_labels")
+    .select("label_id, labels(id, name, color, scope)")
+    .eq("issue_id", issueId);
+  if (error) throw error;
+  return (data ?? []).map((row: { labels: Label | Label[] }) => Array.isArray(row.labels) ? row.labels[0] : row.labels).filter((label): label is Label => Boolean(label));
+}
+
+export function subscribeToIssue(issueId: string, onChange: () => void): () => void {
+  const channel = supabase
+    .channel(`issue-${issueId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "issue_comments", filter: `issue_id=eq.${issueId}` }, onChange)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "issues", filter: `id=eq.${issueId}` }, onChange)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
 }
