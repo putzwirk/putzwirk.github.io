@@ -1198,7 +1198,8 @@ details[open] .chevron {
   cursor: zoom-in;
 }
 
-.issue-attachments img {
+.issue-attachments img,
+.issue-attachments video {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -1219,7 +1220,8 @@ details[open] .chevron {
   animation: attachment-lightbox-in 0.2s ease-out;
 }
 
-.attachment-lightbox img {
+.attachment-lightbox img,
+.attachment-lightbox video {
   width: min(94vw, 1000px);
   height: min(90vh, 900px);
   object-fit: contain;
@@ -1541,7 +1543,8 @@ details[open] .chevron {
   to { opacity: 1; }
 }
 
-.attachment-edit-thumb img {
+.attachment-edit-thumb img,
+.attachment-edit-thumb video {
   user-select: none;
   -webkit-user-drag: none;
   width: 100%;
@@ -2216,7 +2219,8 @@ details[open] .chevron {
     padding: 0.5rem;
   }
 
-  .attachment-lightbox img {
+  .attachment-lightbox img,
+  .attachment-lightbox video {
     width: calc(100vw - 1rem);
     height: calc(100vh - 1rem);
   }

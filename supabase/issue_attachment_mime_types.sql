@@ -1,0 +1,2 @@
+UPDATE storage.buckets SET allowed_mime_types = ARRAY['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml', 'image/avif', 'image/apng', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'image/*', 'video/*'] WHERE id = 'issue-attachments';
+SELECT id, allowed_mime_types, file_size_limit FROM storage.buckets WHERE id = 'issue-attachments';

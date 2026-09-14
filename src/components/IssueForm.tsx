@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Issue, Mod } from "../types";
-import { MAX_ATTACHMENTS, MAX_ATTACHMENT_SIZE, MAX_ATTACHMENT_TOTAL } from "../lib/issueAttachments";
+import { ATTACHMENT_ACCEPT, ATTACHMENT_TYPE_ERROR, MAX_ATTACHMENTS, MAX_ATTACHMENT_SIZE, MAX_ATTACHMENT_TOTAL, isAllowedAttachmentFile, isVideoAttachmentUrl } from "../lib/issueAttachments";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
 import MarkdownToolbar from "./MarkdownToolbar";
 
@@ -127,6 +127,10 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
       setError(`You can attach up to ${MAX_ATTACHMENTS} images.`);
       return;
     }
+    if (selected.some((file) => !isAllowedAttachmentFile(file))) {
+      setError(ATTACHMENT_TYPE_ERROR);
+      return;
+    }
     if (selected.some((file) => file.size > MAX_ATTACHMENT_SIZE)) {
       setError("Each attachment must be 2 MB or smaller.");
       return;
@@ -224,9 +228,9 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
       </div>
       <div className="form-group">
         <label>Attachments (optional)</label>
-        <input ref={attachmentInputRef} className="form-input" type="file" accept="image/*" multiple onChange={(e) => handleAttachments(Array.from(e.target.files ?? []))} />
-        {attachments.length > 0 && <div className="attachment-edit-grid" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment + (dropAfter ? 1 : 0)); }}>{attachmentPreviews.map(({ file, url }, index) => <div className={`attachment-edit-thumb ${dragOverAttachment === index || dragOverAttachment === index + 1 ? "attachment-drop-target" : ""} ${dragOverAttachment === index + 1 ? "attachment-drop-after" : ""}`} key={`${file.name}-${index}`} data-attachment-index={index} draggable={!window.matchMedia("(pointer: coarse)").matches} onDragStart={() => setDraggedAttachment(index)} onDragOver={(event) => { event.preventDefault(); const after = event.clientX > event.currentTarget.getBoundingClientRect().left + event.currentTarget.offsetWidth / 2; setDragOverAttachment(index + (after ? 1 : 0)); setDropAfter(after); }} onDragEnd={() => { if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment); else { setDraggedAttachment(null); setDropAfter(false); } }} onTouchStart={() => setDraggedAttachment(index)} onTouchMove={(event) => { const touch = event.touches[0]; const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest<HTMLElement>("[data-attachment-index]"); if (!target) { setDragOverAttachment(attachments.length); return; } const targetIndex = Number(target.dataset.attachmentIndex); const after = touch.clientX > target.getBoundingClientRect().left + target.offsetWidth / 2; setDragOverAttachment(targetIndex + (after ? 1 : 0)); setDropAfter(after); }} onTouchEnd={() => { if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment); }}><img src={url} alt={file.name} /><button type="button" onClick={() => { setAttachments((items) => items.filter((_item, itemIndex) => itemIndex !== index)); if (attachmentInputRef.current) attachmentInputRef.current.value = ""; }} aria-label={`Remove ${file.name}`}>×</button></div>)}</div>}
-        {attachments.length > 0 && <small>{attachments.length} image{attachments.length === 1 ? "" : "s"} selected · 2 MB each, 10 MB total maximum</small>}
+        <input ref={attachmentInputRef} className="form-input" type="file" accept={ATTACHMENT_ACCEPT} multiple onChange={(e) => handleAttachments(Array.from(e.target.files ?? []))} />
+        {attachments.length > 0 && <div className="attachment-edit-grid" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment + (dropAfter ? 1 : 0)); }}>{attachmentPreviews.map(({ file, url }, index) => <div className={`attachment-edit-thumb ${dragOverAttachment === index || dragOverAttachment === index + 1 ? "attachment-drop-target" : ""} ${dragOverAttachment === index + 1 ? "attachment-drop-after" : ""}`} key={`${file.name}-${index}`} data-attachment-index={index} draggable={!window.matchMedia("(pointer: coarse)").matches} onDragStart={() => setDraggedAttachment(index)} onDragOver={(event) => { event.preventDefault(); const after = event.clientX > event.currentTarget.getBoundingClientRect().left + event.currentTarget.offsetWidth / 2; setDragOverAttachment(index + (after ? 1 : 0)); setDropAfter(after); }} onDragEnd={() => { if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment); else { setDraggedAttachment(null); setDropAfter(false); } }} onTouchStart={() => setDraggedAttachment(index)} onTouchMove={(event) => { const touch = event.touches[0]; const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest<HTMLElement>("[data-attachment-index]"); if (!target) { setDragOverAttachment(attachments.length); return; } const targetIndex = Number(target.dataset.attachmentIndex); const after = touch.clientX > target.getBoundingClientRect().left + target.offsetWidth / 2; setDragOverAttachment(targetIndex + (after ? 1 : 0)); setDropAfter(after); }} onTouchEnd={() => { if (dragOverAttachment !== null) reorderAttachments(dragOverAttachment); }}>{isVideoAttachmentUrl(file.name) ? <video src={url} preload="metadata" aria-label={file.name} /> : <img src={url} alt={file.name} />}<button type="button" onClick={() => { setAttachments((items) => items.filter((_item, itemIndex) => itemIndex !== index)); if (attachmentInputRef.current) attachmentInputRef.current.value = ""; }} aria-label={`Remove ${file.name}`}>×</button></div>)}</div>}
+        {attachments.length > 0 && <small>{attachments.length} file{attachments.length === 1 ? "" : "s"} selected (images, GIFs, videos) · 2 MB each, 10 MB total maximum</small>}
       </div>
       <div className="form-group">
         <label>Your Name (optional)</label>
