@@ -500,11 +500,6 @@ export async function fetchMyIssues(): Promise<Issue[]> {
   return (data ?? []) as Issue[];
 }
 
-export async function convertAnonymousAccount(email: string): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.updateUser({ email });
-  return { error: error?.message ?? null };
-}
-
 export interface PendingComment extends IssueComment {
   issues?: { title: string } | null;
 }

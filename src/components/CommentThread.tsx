@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import MarkdownText from "./MarkdownText";
 import CommentComposer from "./CommentComposer";
 import ConfirmDialog from "./ConfirmDialog";
-import { createComment, deleteComment, updateComment } from "../lib/data";
+import { createComment, deleteComment, moderateComment, updateComment } from "../lib/data";
 import { formatDateTime } from "../lib/formatDate";
 
 interface Props {
@@ -22,6 +22,17 @@ export default function CommentThread({ comments, isStaff, onChanged, referenceI
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editing, setEditing] = useState<IssueComment | null>(null);
   const [deleting, setDeleting] = useState<IssueComment | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
+
+  const handleApprove = async (comment: IssueComment) => {
+    setApproving(comment.id);
+    try {
+      await moderateComment(comment.id, "approved");
+      await onChanged();
+    } finally {
+      setApproving(null);
+    }
+  };
 
   const topLevel = comments.filter((comment) => !comment.parent_id);
   const repliesOf = (id: string) => comments.filter((comment) => comment.parent_id === id);
@@ -64,6 +75,7 @@ export default function CommentThread({ comments, isStaff, onChanged, referenceI
         <div className="comment-actions">
           {!nested && !commentsClosed && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>{replyTo === comment.id ? "Cancel reply" : "Reply"}</button>}
           {pending && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setEditing(comment)}>Edit</button>}
+          {isStaff && comment.moderation_status !== "approved" && <button className="btn btn-accent btn-sm" type="button" onClick={() => handleApprove(comment)} disabled={approving === comment.id}>{approving === comment.id ? "Approving…" : "Approve"}</button>}
           {isStaff && <button className="btn btn-sm issue-delete-btn" type="button" onClick={() => setDeleting(comment)}>Delete</button>}
         </div>
         {replyTo === comment.id && (

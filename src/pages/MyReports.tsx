@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Issue } from "../types";
-import { convertAnonymousAccount, fetchMyIssues } from "../lib/data";
+import { fetchMyIssues } from "../lib/data";
 import { useAuth } from "../context/AuthContext";
 import IssueStateBadge from "../components/IssueStateBadge";
 import { formatDateTime } from "../lib/formatDate";
@@ -11,10 +11,6 @@ export default function MyReports() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [converting, setConverting] = useState(false);
-  const [convertError, setConvertError] = useState<string | null>(null);
-  const [convertSent, setConvertSent] = useState(false);
 
   const load = useCallback(() => {
     if (!session) { setIssues([]); setLoading(false); return; }
@@ -28,24 +24,8 @@ export default function MyReports() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleConvert = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setConverting(true);
-    setConvertError(null);
-    setConvertSent(false);
-    const { error: convertFailure } = await convertAnonymousAccount(email.trim());
-    if (convertFailure) setConvertError(convertFailure);
-    else {
-      setConvertSent(true);
-      setEmail("");
-    }
-    setConverting(false);
-  };
-
   if (loading) return <p className="load-state">Loading your reports</p>;
   if (error) return <div className="error-state">Couldn't load your reports. {error}</div>;
-
-  const isAnonymous = Boolean(session?.user?.is_anonymous);
 
   return (
     <>
@@ -78,32 +58,6 @@ export default function MyReports() {
             </li>
           ))}
         </ul>
-      )}
-
-      {isAnonymous && (
-        <section className="panel conversion-panel">
-          <h2>Save your account</h2>
-          <p className="intro intro-tight">Add an email to keep your reports and notifications when this device changes.</p>
-          <form onSubmit={handleConvert}>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                className="form-input"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-            {convertError && <p className="form-error">{convertError}</p>}
-            {convertSent && <p className="form-success">Check your inbox to confirm the address.</p>}
-            <div className="form-actions">
-              <button className="btn btn-accent" type="submit" disabled={converting}>
-                {converting ? "Sending…" : "Add email"}
-              </button>
-            </div>
-          </form>
-        </section>
       )}
     </>
   );

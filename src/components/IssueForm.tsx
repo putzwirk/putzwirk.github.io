@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { accountDisplayName } from "../lib/session";
 import type { Issue, Mod } from "../types";
 import { ATTACHMENT_ACCEPT, ATTACHMENT_TYPE_ERROR, MAX_ATTACHMENTS, MAX_ATTACHMENT_SIZE, MAX_ATTACHMENT_TOTAL, isAllowedAttachmentFile, isVideoAttachmentUrl } from "../lib/issueAttachments";
 import { handleMarkdownShortcut, indentTextarea, undoMarkdownEdit } from "../lib/markdownEditing";
@@ -29,11 +31,14 @@ const LABELS = {
 };
 
 export default function IssueForm({ initialType, allowTypeChoice, onSubmit, referenceIssues = [], referenceMods = [] }: Props) {
+  const { session } = useAuth();
+  const accountName = accountDisplayName(session);
   const [category, setCategory] = useState<"bug" | "idea">(initialType);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [referenceActive, setReferenceActive] = useState(false);
-  const [author, setAuthor] = useState("");
+  const editedAuthorRef = useRef(false);
+  const [author, setAuthor] = useState(accountName);
   const [attachments, setAttachments] = useState<File[]>([]);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [draggedAttachment, setDraggedAttachment] = useState<number | null>(null);
@@ -44,6 +49,11 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
   const [success, setSuccess] = useState(false);
   const descriptionWrapRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!accountName || editedAuthorRef.current) return;
+    setAuthor(accountName);
+  }, [accountName]);
 
   const labels = LABELS[category];
   const [descriptionCursor, setDescriptionCursor] = useState<number | null>(null);
@@ -165,7 +175,7 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
       await onSubmit(title, description, author || "Anonymous", category, attachments);
       setTitle("");
       setDescription("");
-      setAuthor("");
+      setAuthor(accountName);
       setAttachments([]);
       setSuccess(true);
     } catch (err) {
@@ -238,7 +248,7 @@ export default function IssueForm({ initialType, allowTypeChoice, onSubmit, refe
         <input
           className="form-input"
           value={author}
-          onChange={(e) => setAuthor(e.target.value)}
+          onChange={(e) => { editedAuthorRef.current = true; setAuthor(e.target.value); }}
           maxLength={40}
           placeholder="Anonymous"
         />

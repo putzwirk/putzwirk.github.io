@@ -21,6 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
+      if (data.session && !data.session.user.is_anonymous) {
+        supabase.auth
+          .getUser()
+          .then(({ data: fresh }) => {
+            if (fresh.user) setSession((current) => (current ? { ...current, user: fresh.user } : current));
+          })
+          .catch(() => undefined);
+      }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {

@@ -130,7 +130,7 @@ export default function IssueDetail() {
                 </select>
               </label>
             )}
-            <button className="btn btn-sm issue-delete-btn" type="button" onClick={() => setConfirmDelete(true)}>Delete issue</button>
+            <button className="btn issue-delete-btn issue-detail-delete" type="button" onClick={() => setConfirmDelete(true)}>Delete issue</button>
           </div>
         )}
       </div>

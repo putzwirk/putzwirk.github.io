@@ -342,15 +342,15 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
         <Link to="/lucidblocks/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
         <Link to="/lucidblocks/admin/submissions" className={submissionsPage ? "active" : ""}>Submissions</Link>
         <Link to="/lucidblocks/admin/comments" className={commentsPage ? "active" : ""}>
-          Comments{pendingComments.length > 0 && <span className="chip chip-issues">{pendingComments.length}</span>}
+          Comments{pendingComments.length > 0 && <span className="chip tab-count">{pendingComments.length}</span>}
         </Link>
       </nav>
       {error && <div className="error-state">{error}</div>}
       {submissionsPage && (
         <>
           <div className="staff-view-nav" role="tablist" aria-label="Submission filters">
-            <button type="button" role="tab" aria-selected={submissionTab === "pending"} className={submissionTab === "pending" ? "active" : ""} onClick={() => setSubmissionTab("pending")}>Pending{pendingIssues.length > 0 && <span className="chip chip-issues">{pendingIssues.length}</span>}</button>
-            <button type="button" role="tab" aria-selected={submissionTab === "blocked"} className={submissionTab === "blocked" ? "active" : ""} onClick={() => setSubmissionTab("blocked")}>Blocked{rejectedIssues.length > 0 && <span className="chip chip-issues">{rejectedIssues.length}</span>}</button>
+            <button type="button" role="tab" aria-selected={submissionTab === "pending"} className={submissionTab === "pending" ? "active" : ""} onClick={() => setSubmissionTab("pending")}>Pending{pendingIssues.length > 0 && <span className="chip tab-count">{pendingIssues.length}</span>}</button>
+            <button type="button" role="tab" aria-selected={submissionTab === "blocked"} className={submissionTab === "blocked" ? "active" : ""} onClick={() => setSubmissionTab("blocked")}>Blocked{rejectedIssues.length > 0 && <span className="chip tab-count">{rejectedIssues.length}</span>}</button>
           </div>
           {submissionTab === "pending" && (
             <>

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { Session } from "@supabase/supabase-js";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { accountDisplayName } from "../lib/session";
 
 export function authRedirectTarget(): string {
   if (typeof window === "undefined") return "";
@@ -23,22 +23,11 @@ export function friendlyAuthError(message: string | null): string | null {
   return "Could not start Discord sign-in. Please try again later.";
 }
 
-function displayName(session: Session): string {
-  const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>;
-  for (const candidate of [metadata.global_name, metadata.name, metadata.full_name, metadata.user_name]) {
-    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
-  }
-  const email = session.user.email;
-  if (email) return email.split("@")[0];
-  return "Account";
-}
-
 export default function AuthMenu() {
   const { session, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,16 +54,6 @@ export default function AuthMenu() {
     setBusy(false);
   };
 
-  const handleSave = async () => {
-    setBusy(true);
-    setError(null);
-    setMessage(null);
-    const { error: linkError } = await supabase.auth.linkIdentity({ provider: "discord", options: { redirectTo: authRedirectTarget() } });
-    if (linkError) setError(friendlyAuthError(linkError.message));
-    else setMessage("Discord linked to this account.");
-    setBusy(false);
-  };
-
   if (!session) {
     return (
       <div className="auth-menu auth-menu-guest">
@@ -86,23 +65,15 @@ export default function AuthMenu() {
     );
   }
 
-  const anonymous = Boolean(session.user.is_anonymous);
-
   return (
     <div ref={menuRef} className={`auth-menu${open ? " open" : ""}`}>
       <button className="auth-trigger" type="button" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((value) => !value)}>
-        <span className="auth-name">{displayName(session)}</span>
+        <span className="auth-name">{accountDisplayName(session) || "Account"}</span>
         <span className="auth-caret" aria-hidden="true">▾</span>
       </button>
       <div className="auth-popover" aria-hidden={!open}>
-        {anonymous && (
-          <button className="auth-item auth-item-accent" type="button" onClick={handleSave} disabled={busy}>
-            {busy ? "Opening…" : "Save your reports"}
-          </button>
-        )}
         <Link className="auth-item" to="/lucidblocks/my" onClick={() => setOpen(false)}>My reports</Link>
         <button className="auth-item" type="button" onClick={() => { setOpen(false); signOut(); }}>Sign out</button>
-        {message && <p className="auth-message">{message}</p>}
         {error && <p className="auth-error" role="alert">{error}</p>}
       </div>
     </div>
