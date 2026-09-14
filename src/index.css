@@ -1737,11 +1737,38 @@ details[open] .chevron {
   margin-top: 0.5rem;
 }
 
-.empty-state,
-.load-state {
+.empty-state {
   color: var(--text-faint);
   font-size: 0.9rem;
   padding: var(--space-sm) 0;
+}
+
+.load-state {
+  color: var(--text-faint);
+  font-size: 1.05rem;
+  padding: var(--space-sm) 0;
+}
+
+.load-state::after {
+  display: inline-block;
+  width: 1.5em;
+  text-align: left;
+  content: "";
+  animation: loading-dots 1.2s steps(4) infinite;
+}
+
+@keyframes loading-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .load-state::after {
+    animation: none;
+    content: "...";
+  }
 }
 
 .error-state {

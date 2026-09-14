@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { ModWithVersions, ModVersion } from "../types";
@@ -12,6 +12,7 @@ import IssueEditForm from "../components/IssueEditForm";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
 import { removePendingIssue, mergeWithPending } from "../lib/pendingIssues";
+import { centerAfterRender } from "../lib/centerScroll";
 
 export default function Admin({ submissionsOnly = false }: { submissionsOnly?: boolean }) {
   const { session, loading: authLoading } = useAuth();
@@ -28,6 +29,16 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [deletingMod, setDeletingMod] = useState<ModWithVersions | null>(null);
   const [deletingVersion, setDeletingVersion] = useState<ModVersion | null>(null);
+  const modFormRef = useRef<HTMLDivElement>(null);
+  const versionFormRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showModForm) centerAfterRender(modFormRef);
+  }, [showModForm]);
+
+  useEffect(() => {
+    if (versionTarget || editingVersion) centerAfterRender(versionFormRef);
+  }, [versionTarget, editingVersion]);
 
   useEffect(() => { if (session) { loadMods(); fetchPendingIssues().then((items) => { setPendingIssues(mergeWithPending(items)); }).catch((e) => setError(e.message)); } }, [session]);
 
@@ -40,7 +51,7 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
     fetchModsWithVersions().then(setMods).catch((e) => setError(e.message)).finally(() => setLoading(false));
   };
 
-  if (authLoading) return <p className="load-state">Loading…</p>;
+  if (authLoading) return <p className="load-state">Loading</p>;
   if (!session) return <Navigate to="/lucidblocks/login" replace />;
 
   return (
@@ -54,16 +65,22 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
       {editingIssue && <IssueEditForm issue={editingIssue} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingIssue.id, title, description, attachmentUrls, newAttachments); setPendingIssues((items) => items.map((item) => item.id === editingIssue.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingIssue(null); }} onCancel={() => setEditingIssue(null)} />}
       {!submissionsPage && <>
       {showModForm && (
-        <ModForm mod={editingMod} availableMods={mods} onSubmit={async (data) => { if (editingMod) { await updateMod(editingMod.id, data); } else { await createMod(data); } setShowModForm(false); setEditingMod(null); loadMods(); }} onCancel={() => { setShowModForm(false); setEditingMod(null); }} />
+        <div ref={modFormRef}>
+          <ModForm mod={editingMod} availableMods={mods} onSubmit={async (data) => { if (editingMod) { await updateMod(editingMod.id, data); } else { await createMod(data); } setShowModForm(false); setEditingMod(null); loadMods(); }} onCancel={() => { setShowModForm(false); setEditingMod(null); }} />
+        </div>
       )}
       {versionTarget && !editingVersion && (
-        <VersionForm modId={versionTarget} onSubmit={async (versionData, file) => { await createVersion(versionData, file!); setVersionTarget(null); loadMods(); }} onCancel={() => setVersionTarget(null)} />
+        <div ref={versionFormRef}>
+          <VersionForm modId={versionTarget} onSubmit={async (versionData, file) => { await createVersion(versionData, file!); setVersionTarget(null); loadMods(); }} onCancel={() => setVersionTarget(null)} />
+        </div>
       )}
       {editingVersion && (
-        <VersionForm modId={editingVersion.mod_id} initial={editingVersion} onSubmit={async (versionData, file) => { await updateVersion(editingVersion.id, { version: versionData.version, game_version: versionData.game_version, release_date: versionData.release_date, changelog: versionData.changelog }, file, editingVersion.mod_id); setEditingVersion(null); loadMods(); }} onCancel={() => setEditingVersion(null)} />
+        <div ref={versionFormRef}>
+          <VersionForm modId={editingVersion.mod_id} initial={editingVersion} onSubmit={async (versionData, file) => { await updateVersion(editingVersion.id, { version: versionData.version, game_version: versionData.game_version, release_date: versionData.release_date, changelog: versionData.changelog }, file, editingVersion.mod_id); setEditingVersion(null); loadMods(); }} onCancel={() => setEditingVersion(null)} />
+        </div>
       )}
       {loading ? (
-        <p className="load-state">Loading…</p>
+        <p className="load-state">Loading</p>
       ) : (
         <div className="mod-grid">
           {mods.map((mod) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Issue } from "../types";
 import { fetchIdeas, createIssue, voteForIdea, updateIssueStatus, deleteIssue, updateIssueContent } from "../lib/data";
 import { removePendingIssue, updatePendingIssue } from "../lib/pendingIssues";
@@ -10,6 +10,7 @@ import AttachmentGallery from "../components/AttachmentGallery";
 import ConfirmDialog from "../components/ConfirmDialog";
 import IssueEditForm from "../components/IssueEditForm";
 import { formatDateTime } from "../lib/formatDate";
+import { centerAfterRender } from "../lib/centerScroll";
 
 function loadVotedIds(): Set<string> {
   try {
@@ -34,11 +35,17 @@ export default function Ideas() {
   const [editingAdmin, setEditingAdmin] = useState<Issue | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<Issue | null>(null);
   const { session } = useAuth();
+  const ideaFormRef = useRef<HTMLDivElement>(null);
+  const sortedIdeas = useMemo(() => [...ideas].sort((a, b) => (a.status === b.status ? 0 : a.status === "closed" ? 1 : -1)), [ideas]);
 
   useEffect(() => {
     setVotedIds(loadVotedIds());
     loadIdeas();
   }, []);
+
+  useEffect(() => {
+    if (showForm) centerAfterRender(ideaFormRef);
+  }, [showForm]);
 
   const loadIdeas = () => {
     setLoading(true);
@@ -64,7 +71,7 @@ export default function Ideas() {
     loadIdeas();
   };
 
-  if (loading) return <p className="load-state">Loading ideas…</p>;
+  if (loading) return <p className="load-state">Loading ideas</p>;
   if (error) return <div className="error-state">Couldn't load ideas. {error}</div>;
 
   return (
@@ -77,14 +84,16 @@ export default function Ideas() {
         <button className="btn btn-accent" onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "Suggest an idea"}</button>
       </div>
       {showForm && (
-        <IssueForm initialType="idea" referenceIssues={ideas} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: null, type, title, description: desc, author_name: author, attachments }); setIdeas((items) => [pendingIssue, ...items]); setShowForm(false); }} />
+        <div ref={ideaFormRef}>
+          <IssueForm initialType="idea" referenceIssues={ideas} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: null, type, title, description: desc, author_name: author, attachments }); setIdeas((items) => [pendingIssue, ...items]); setShowForm(false); }} />
+          </div>
       )}
       <section>
         {ideas.length === 0 ? (
           <p className="empty-state">No ideas yet — be the first to suggest one.</p>
         ) : (
           <ul className="issue-list">
-            {ideas.map((idea) => (
+            {sortedIdeas.map((idea) => (
               <li key={idea.id} className={`issue-row ${idea.status === "closed" ? "issue-row-closed" : ""}`}>
                 <div className="issue-row-content">
                   <div className="issue-row-head">
@@ -93,7 +102,7 @@ export default function Ideas() {
                   </div>
                   {idea.description && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <div className="issue-row-desc"><MarkdownText text={idea.description} issues={ideas} /></div>}
                   {idea.attachment_urls?.length > 0 && (idea.status !== "closed" || expandedClosed.has(idea.id)) && <AttachmentGallery urls={idea.attachment_urls} />}
-                  {idea.status === "closed" && (idea.description || idea.attachment_urls?.length > 0) && <button className="btn btn-sm issue-details-toggle" onClick={() => setExpandedClosed((current) => { const next = new Set(current); if (next.has(idea.id)) next.delete(idea.id); else next.add(idea.id); return next; })}>{expandedClosed.has(idea.id) ? "Hide details" : "Show details"}</button>}
+                  {idea.status === "closed" && (idea.description?.trim() || (idea.attachment_urls?.length ?? 0) > 0) && <button className="btn btn-sm issue-details-toggle" onClick={() => setExpandedClosed((current) => { const next = new Set(current); if (next.has(idea.id)) next.delete(idea.id); else next.add(idea.id); return next; })}>{expandedClosed.has(idea.id) ? "Hide details" : "Show details"}</button>}
                   <div className="issue-row-meta">
                     {idea.status === "open" && <button className={`vote-btn ${votedIds.has(idea.id) ? "voted" : ""}`} onClick={() => handleVote(idea.id)} disabled={votedIds.has(idea.id)}>↑ {idea.votes} {votedIds.has(idea.id) ? "voted" : "vote"}</button>}
                     <span>by {idea.author_name}</span>

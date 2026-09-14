@@ -19,7 +19,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="load-state">Loading mods…</p>;
+  if (loading) return <p className="load-state">Loading mods</p>;
   if (error) return <div className="error-state">Couldn't load mods. {error}</div>;
 
   return (

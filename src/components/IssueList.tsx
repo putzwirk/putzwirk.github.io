@@ -24,20 +24,22 @@ export default function IssueList({ issues, isAdmin, onStatusChange, onDelete, o
   const [editingAdmin, setEditingAdmin] = useState<Issue | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<Issue | null>(null);
   const pendingIds = useMemo(() => new Set(loadPendingIssues().map((item) => item.id)), [issues, editingLocal, deletingLocal]);
+  const sortedIssues = useMemo(() => [...issues].sort((a, b) => (a.status === b.status ? 0 : a.status === "closed" ? 1 : -1)), [issues]);
   if (issues.length === 0) {
     return <p className="empty-state">No issues reported for this mod yet.</p>;
   }
   return (
     <><ul className="issue-list">
-      {issues.map((issue) => {
+      {sortedIssues.map((issue) => {
         const isExpanded = expanded.has(issue.id);
         const isLocal = pendingIds.has(issue.id);
+        const hasDetails = Boolean(issue.description?.trim()) || (issue.attachment_urls?.length ?? 0) > 0;
         return (
         <li key={issue.id} className={`issue-row ${issue.status === "closed" ? "issue-row-closed" : ""}`}>
           <div className="issue-row-content">
             <div className="issue-row-head">
               <span className={`type-badge ${issue.type === "bug" ? "type-bug" : "type-feature"}`}>{issue.type === "bug" ? "Bug" : "Feature"}</span>
-              <span className="issue-row-title">{issue.title}{issue.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>{issue.status === "closed" && <button className="btn btn-sm issue-action-btn issue-details-toggle" onClick={() => setExpanded((items) => { const next = new Set(items); isExpanded ? next.delete(issue.id) : next.add(issue.id); return next; })}>{isExpanded ? "Hide details" : "Show details"}</button>}
+              <span className="issue-row-title">{issue.title}{issue.moderation_status === "pending" && <span className="pending-label">pending moderation</span>}</span>{issue.status === "closed" && hasDetails && <button className="btn btn-sm issue-action-btn issue-details-toggle" onClick={() => setExpanded((items) => { const next = new Set(items); isExpanded ? next.delete(issue.id) : next.add(issue.id); return next; })}>{isExpanded ? "Hide details" : "Show details"}</button>}
             </div>
             {(issue.status === "open" || isExpanded) && issue.description && <div className="issue-row-desc"><MarkdownText text={issue.description} issues={issues} /></div>}
             {(issue.status === "open" || isExpanded) && issue.attachment_urls?.length > 0 && <AttachmentGallery urls={issue.attachment_urls} />}
