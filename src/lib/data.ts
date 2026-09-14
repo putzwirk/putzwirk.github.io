@@ -495,3 +495,35 @@ export async function convertAnonymousAccount(email: string): Promise<{ error: s
   const { error } = await supabase.auth.updateUser({ email });
   return { error: error?.message ?? null };
 }
+
+export interface PendingComment extends IssueComment {
+  issues?: { title: string } | null;
+}
+
+export async function fetchPendingComments(): Promise<PendingComment[]> {
+  const { data, error } = await supabase
+    .from("issue_comments")
+    .select("*, issues(title)")
+    .eq("moderation_status", "pending")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as PendingComment[];
+}
+
+export async function fetchPendingCommentCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("issue_comments")
+    .select("*", { count: "exact", head: true })
+    .eq("moderation_status", "pending");
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function moderateComment(id: string, status: "approved" | "rejected", reason?: string): Promise<void> {
+  const { error } = await supabase.from("issue_comments").update({
+    moderation_status: status,
+    moderated_at: new Date().toISOString(),
+    moderation_reason: status === "rejected" ? (reason?.trim() || "Rejected by moderator") : null,
+  }).eq("id", id);
+  if (error) throw error;
+}

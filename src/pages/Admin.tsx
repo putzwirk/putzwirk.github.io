@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Issue, Label, ModVersion, ModWithVersions } from "../types";
-import { createLabel, createMod, createVersion, deleteIssue, deleteMod, deleteVersion, fetchIssueLabelsForIssues, fetchLabels, fetchModsWithVersions, fetchPendingIssues, moderateIssue, setIssueLabels, updateIssueContent, updateMod, updateVersion } from "../lib/data";
-import type { VersionMeta } from "../lib/data";
+import { createLabel, createMod, createVersion, deleteComment, deleteIssue, deleteMod, deleteVersion, fetchIssueLabelsForIssues, fetchLabels, fetchModsWithVersions, fetchPendingComments, fetchPendingIssues, moderateComment, moderateIssue, setIssueLabels, updateIssueContent, updateMod, updateVersion } from "../lib/data";
+import type { PendingComment, VersionMeta } from "../lib/data";
 import ModForm from "../components/ModForm";
 import VersionForm from "../components/VersionForm";
 import AttachmentGallery from "../components/AttachmentGallery";
@@ -20,7 +20,7 @@ import { supabase } from "../lib/supabase";
 type TypeFilter = "all" | "bug" | "idea";
 type SortOrder = "newest" | "oldest";
 
-function RejectReasonDialog({ label, onCancel, onConfirm }: { label: string; onCancel: () => void; onConfirm: (reason: string) => void | Promise<void> }) {
+function RejectReasonDialog({ title = "Reject submission?", label, onCancel, onConfirm }: { title?: string; label: string; onCancel: () => void; onConfirm: (reason: string) => void | Promise<void> }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -33,7 +33,7 @@ function RejectReasonDialog({ label, onCancel, onConfirm }: { label: string; onC
   return (
     <div className="confirm-dialog-backdrop" onClick={onCancel}>
       <div className="confirm-dialog reject-dialog" onClick={(event) => event.stopPropagation()}>
-        <h2>Reject submission?</h2>
+        <h2>{title}</h2>
         <p>{label}</p>
         <label className="reject-dialog-field">
           Reason (optional)
@@ -48,10 +48,12 @@ function RejectReasonDialog({ label, onCancel, onConfirm }: { label: string; onC
   );
 }
 
-export default function Admin({ submissionsOnly = false }: { submissionsOnly?: boolean }) {
+export default function Admin({ submissionsOnly = false, commentsOnly = false }: { submissionsOnly?: boolean; commentsOnly?: boolean }) {
   const { isStaff, loading: authLoading } = useAuth();
   const location = useLocation();
+  const commentsPage = commentsOnly || location.pathname.endsWith("/comments");
   const submissionsPage = submissionsOnly || location.pathname.endsWith("/submissions");
+  const managementPage = !submissionsPage && !commentsPage;
   const [mods, setMods] = useState<ModWithVersions[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +75,11 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   const [sort, setSort] = useState<SortOrder>("newest");
   const [rejectTarget, setRejectTarget] = useState<{ ids: string[]; label: string } | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [pendingComments, setPendingComments] = useState<PendingComment[]>([]);
+  const [selectedCommentIds, setSelectedCommentIds] = useState<Set<string>>(new Set());
+  const [deletingComment, setDeletingComment] = useState<PendingComment | null>(null);
+  const [commentRejectTarget, setCommentRejectTarget] = useState<{ ids: string[]; label: string } | null>(null);
+  const [confirmCommentBulkDelete, setConfirmCommentBulkDelete] = useState(false);
   const modFormRef = useRef<HTMLDivElement>(null);
   const versionFormRef = useRef<HTMLDivElement>(null);
 
@@ -95,12 +102,17 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
     setLabelsByIssue(await fetchIssueLabelsForIssues(issues.map((issue) => issue.id)));
   }, []);
 
+  const loadComments = useCallback(async () => {
+    setPendingComments(await fetchPendingComments());
+  }, []);
+
   useEffect(() => {
     if (!isStaff) return;
     loadMods();
     fetchLabels().then(setLabels).catch((e) => setError(e.message));
     loadQueue().catch((e) => setError(e.message));
-  }, [isStaff, loadQueue]);
+    loadComments().catch((e) => setError(e.message));
+  }, [isStaff, loadQueue, loadComments]);
 
   useEffect(() => {
     if (!isStaff) return;
@@ -111,10 +123,11 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "issue_comments" }, () => {
         loadQueue().catch(() => undefined);
+        loadComments().catch(() => undefined);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [isStaff, loadQueue]);
+  }, [isStaff, loadQueue, loadComments]);
 
   const filteredIssues = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -200,6 +213,70 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
     setConfirmBulkDelete(false);
   };
 
+  const removeComments = (ids: string[]) => {
+    setPendingComments((items) => items.filter((item) => !ids.includes(item.id)));
+    setSelectedCommentIds(new Set());
+  };
+
+  const removeComment = (id: string) => {
+    setPendingComments((items) => items.filter((item) => item.id !== id));
+    setSelectedCommentIds((current) => { const next = new Set(current); next.delete(id); return next; });
+  };
+
+  const applyCommentModeration = async (ids: string[], status: "approved" | "rejected", reason?: string) => {
+    await Promise.all(ids.map((id) => moderateComment(id, status, reason)));
+    removeComments(ids);
+  };
+
+  const handleApproveComments = async (ids: string[]) => {
+    try {
+      await applyCommentModeration(ids, "approved");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Approve failed.");
+    }
+  };
+
+  const handleCommentBulkReject = () => {
+    if (selectedCommentIds.size === 0) return;
+    setCommentRejectTarget({ ids: [...selectedCommentIds], label: `${selectedCommentIds.size} selected comment${selectedCommentIds.size === 1 ? "" : "s"}` });
+  };
+
+  const handleCommentRejectConfirm = async (reason: string) => {
+    if (!commentRejectTarget) return;
+    try {
+      await applyCommentModeration(commentRejectTarget.ids, "rejected", reason);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reject failed.");
+    }
+    setCommentRejectTarget(null);
+  };
+
+  const handleCommentBulkDelete = async () => {
+    const ids = [...selectedCommentIds];
+    try {
+      await Promise.all(ids.map((id) => deleteComment(id)));
+      removeComments(ids);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Bulk delete failed.");
+    }
+    setConfirmCommentBulkDelete(false);
+  };
+
+  const toggleCommentSelect = (id: string) => {
+    setSelectedCommentIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const allCommentsSelected = pendingComments.length > 0 && selectedCommentIds.size === pendingComments.length;
+
+  const toggleSelectAllComments = () => {
+    if (allCommentsSelected) setSelectedCommentIds(new Set());
+    else setSelectedCommentIds(new Set(pendingComments.map((item) => item.id)));
+  };
+
   const toggleIssueLabel = async (issueId: string, label: Label) => {
     const current = labelsByIssue[issueId] ?? [];
     const nextIds = current.some((item) => item.id === label.id)
@@ -229,9 +306,16 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
   return (
     <>
       <div className="section-head admin-manage-head">
-        <h1>{submissionsPage ? "Submissions" : "Manage Mods"}</h1>
-        {!submissionsPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add Mod</button>}
+        <h1>{submissionsPage ? "Submissions" : commentsPage ? "Comments" : "Manage Mods"}</h1>
+        {managementPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add Mod</button>}
       </div>
+      <nav className="staff-view-nav" aria-label="Moderation views">
+        <Link to="/lucidblocks/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
+        <Link to="/lucidblocks/admin/submissions" className={submissionsPage ? "active" : ""}>Submissions</Link>
+        <Link to="/lucidblocks/admin/comments" className={commentsPage ? "active" : ""}>
+          Comments{pendingComments.length > 0 && <span className="chip chip-issues">{pendingComments.length}</span>}
+        </Link>
+      </nav>
       {error && <div className="error-state">{error}</div>}
       {submissionsPage && (
         <>
@@ -306,8 +390,58 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
           )}
         </>
       )}
+      {commentsPage && (
+        <>
+          <div className="panel comment-queue-toolbar">
+            <div className="queue-toolbar-actions">
+              <span className="queue-count">{pendingComments.length} pending comment{pendingComments.length === 1 ? "" : "s"}{selectedCommentIds.size > 0 ? ` · ${selectedCommentIds.size} selected` : ""}</span>
+              <label className="queue-select-all">
+                <input type="checkbox" checked={allCommentsSelected} onChange={toggleSelectAllComments} disabled={pendingComments.length === 0} aria-label="Select all pending comments" />
+                Select all
+              </label>
+              <div className="queue-bulk">
+                <button className="btn btn-accent btn-sm" type="button" onClick={() => handleApproveComments([...selectedCommentIds])} disabled={selectedCommentIds.size === 0}>Bulk approve</button>
+                <button className="btn btn-sm" type="button" onClick={handleCommentBulkReject} disabled={selectedCommentIds.size === 0}>Bulk reject</button>
+                <button className="btn btn-danger btn-sm" type="button" onClick={() => setConfirmCommentBulkDelete(true)} disabled={selectedCommentIds.size === 0}>Bulk delete</button>
+              </div>
+            </div>
+          </div>
+          {pendingComments.length === 0 ? (
+            <p className="empty-state">There are no pending comments.</p>
+          ) : (
+            <section className="moderation-panel">
+              {pendingComments.map((comment) => (
+                <article className={`moderation-item${selectedCommentIds.has(comment.id) ? " moderation-item-selected" : ""}`} key={comment.id}>
+                  <div className="issue-row-content">
+                    <div className="issue-row-head">
+                      <label className="queue-row-select">
+                        <input type="checkbox" checked={selectedCommentIds.has(comment.id)} onChange={() => toggleCommentSelect(comment.id)} aria-label={`Select comment by ${comment.author_name}`} />
+                      </label>
+                      <span className="chip">Comment</span>
+                      <span className="issue-row-title">
+                        {comment.author_name} on <Link className="issue-comment-link" to={`/lucidblocks/issues/${comment.issue_id}`}>{comment.issues?.title ?? "issue"}</Link>
+                      </span>
+                    </div>
+                    <div className="issue-row-desc"><MarkdownText text={comment.body} issues={pendingIssues} mods={mods} /></div>
+                    <div className="issue-row-meta">
+                      <span>by {comment.author_name}</span>
+                      <span>{formatDateTime(comment.created_at)}</span>
+                      <span className="pending-label">pending moderation</span>
+                    </div>
+                  </div>
+                  <div className="admin-controls">
+                    <button className="btn btn-accent btn-sm" onClick={() => handleApproveComments([comment.id])}>Approve</button>
+                    <button className="btn btn-sm" onClick={() => setCommentRejectTarget({ ids: [comment.id], label: comment.author_name })}>Reject</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeletingComment(comment)}>Delete</button>
+                  </div>
+                </article>
+              ))}
+            </section>
+          )}
+        </>
+      )}
       {editingIssue && <IssueEditForm issue={editingIssue} onSubmit={async (title, description, attachmentUrls, newAttachments) => { const urls = await updateIssueContent(editingIssue.id, title, description, attachmentUrls, newAttachments); setPendingIssues((items) => items.map((item) => item.id === editingIssue.id ? { ...item, title, description, attachment_urls: urls } : item)); setEditingIssue(null); }} onCancel={() => setEditingIssue(null)} />}
-      {!submissionsPage && <>
+      {managementPage && <>
       {showModForm && (
         <div ref={modFormRef}>
           <ModForm mod={editingMod} availableMods={mods} onSubmit={async (data) => { if (editingMod) { await updateMod(editingMod.id, data); } else { await createMod(data); } setShowModForm(false); setEditingMod(null); loadMods(); }} onCancel={() => { setShowModForm(false); setEditingMod(null); }} />
@@ -371,6 +505,9 @@ export default function Admin({ submissionsOnly = false }: { submissionsOnly?: b
       {deletingVersion && <ConfirmDialog title="Delete version?" message={`Delete version ${deletingVersion.version}?`} onCancel={() => setDeletingVersion(null)} onConfirm={async () => { await deleteVersion(deletingVersion); setDeletingVersion(null); loadMods(); }} />}
       {rejectTarget && <RejectReasonDialog label={rejectTarget.label} onCancel={() => setRejectTarget(null)} onConfirm={handleRejectConfirm} />}
       {confirmBulkDelete && <ConfirmDialog title="Delete selected submissions?" message={`Delete ${selectedIssues.length} submission${selectedIssues.length === 1 ? "" : "s"} permanently?`} onCancel={() => setConfirmBulkDelete(false)} onConfirm={handleBulkDelete} />}
+      {commentRejectTarget && <RejectReasonDialog title="Reject comment?" label={commentRejectTarget.label} onCancel={() => setCommentRejectTarget(null)} onConfirm={handleCommentRejectConfirm} />}
+      {deletingComment && <ConfirmDialog title="Delete comment?" message="This comment will be permanently removed." onCancel={() => setDeletingComment(null)} onConfirm={async () => { const target = deletingComment; await deleteComment(target.id); removeComment(target.id); setDeletingComment(null); }} />}
+      {confirmCommentBulkDelete && <ConfirmDialog title="Delete selected comments?" message={`Delete ${selectedCommentIds.size} comment${selectedCommentIds.size === 1 ? "" : "s"} permanently?`} onCancel={() => setConfirmCommentBulkDelete(false)} onConfirm={handleCommentBulkDelete} />}
     </>
   );
 }

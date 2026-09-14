@@ -12,10 +12,11 @@ import Notifications from "./pages/Notifications";
 import MyReports from "./pages/MyReports";
 import BubbleBears from "./components/BubbleBears";
 import NotificationBell from "./components/NotificationBell";
+import AuthMenu from "./components/AuthMenu";
 import SettingsPopover, { BearSettings } from "./components/SettingsPopover";
 import { loadBearSettings } from "./lib/bearSettings";
 import { useAuth } from "./context/AuthContext";
-import { fetchPendingIssues } from "./lib/data";
+import { fetchPendingCommentCount, fetchPendingIssues } from "./lib/data";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -30,11 +31,15 @@ function LucidLayout() {
   const location = useLocation();
   const { session, isStaff, signOut } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCommentCount, setPendingCommentCount] = useState(0);
   useEffect(() => {
-    if (!isStaff) { setPendingCount(0); return; }
-    const refreshPendingCount = () => fetchPendingIssues().then((items) => setPendingCount(items.length)).catch(() => undefined);
-    refreshPendingCount();
-    const timer = window.setInterval(refreshPendingCount, 5000);
+    if (!isStaff) { setPendingCount(0); setPendingCommentCount(0); return; }
+    const refreshPendingCounts = () => {
+      fetchPendingIssues().then((items) => setPendingCount(items.length)).catch(() => undefined);
+      fetchPendingCommentCount().then(setPendingCommentCount).catch(() => undefined);
+    };
+    refreshPendingCounts();
+    const timer = window.setInterval(refreshPendingCounts, 5000);
     return () => window.clearInterval(timer);
   }, [isStaff]);
   const [settings, setSettings] = useState<BearSettings>(loadBearSettings);
@@ -63,7 +68,8 @@ function LucidLayout() {
             </Link>
             <NotificationBell />
             <SettingsPopover settings={settings} onChange={setSettings} />
-            {isStaff && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
+            <AuthMenu />
+            {isStaff && <><Link to="/lucidblocks/admin" className={isAdminPage && !location.pathname.endsWith("/submissions") && !location.pathname.endsWith("/comments") ? "active" : ""}>Admin</Link><Link to="/lucidblocks/admin/submissions" className={location.pathname.endsWith("/submissions") ? "active" : ""}><span className="submissions-tab-label">Submissions{pendingCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCount} pending submissions`} />}</span></Link><Link to="/lucidblocks/admin/comments" className={location.pathname.endsWith("/comments") ? "active" : ""}><span className="submissions-tab-label">Comments{pendingCommentCount > 0 && <span className="pending-count-dot" aria-label={`${pendingCommentCount} pending comments`} />}</span></Link><button className="btn btn-sm header-logout-btn" onClick={signOut} title="Logout" aria-label="Logout">[➜]</button></>}
           </nav>
         </div>
       </header>
@@ -78,6 +84,7 @@ function LucidLayout() {
           <Route path="login" element={<Login />} />
           <Route path="admin" element={<Admin />} />
           <Route path="admin/submissions" element={<Submissions />} />
+          <Route path="admin/comments" element={<Admin commentsOnly />} />
         </Routes>
       </main>
       <footer className="site-footer">

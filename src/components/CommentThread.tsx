@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Issue, IssueComment, Mod } from "../types";
+import { useAuth } from "../context/AuthContext";
 import MarkdownText from "./MarkdownText";
 import CommentComposer from "./CommentComposer";
 import ConfirmDialog from "./ConfirmDialog";
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export default function CommentThread({ comments, isStaff, onChanged, referenceIssues = [], referenceMods = [] }: Props) {
+  const { session } = useAuth();
+  const viewerId = session?.user?.id ?? null;
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editing, setEditing] = useState<IssueComment | null>(null);
   const [deleting, setDeleting] = useState<IssueComment | null>(null);
@@ -24,12 +27,16 @@ export default function CommentThread({ comments, isStaff, onChanged, referenceI
 
   const renderComment = (comment: IssueComment, nested: boolean) => {
     const pending = comment.moderation_status === "pending";
+    const rejected = comment.moderation_status === "rejected";
+    const ownRejected = rejected && Boolean(comment.author_id) && comment.author_id === viewerId;
+    const showReason = rejected && Boolean(comment.moderation_reason) && (ownRejected || isStaff);
     return (
-      <li key={comment.id} className={`comment${pending ? " comment-pending" : ""}${nested ? " comment-reply" : ""}`}>
+      <li key={comment.id} className={`comment${pending ? " comment-pending" : ""}${rejected ? " comment-rejected" : ""}${nested ? " comment-reply" : ""}`}>
         <div className="comment-head">
           <span className="comment-author">{comment.author_name}</span>
           <span className="comment-time">{formatDateTime(comment.created_at)}</span>
           {pending && <span className="pending-label">pending moderation</span>}
+          {rejected && <span className="comment-rejected-label">rejected</span>}
         </div>
         {editing?.id === comment.id ? (
           <CommentComposer
@@ -46,6 +53,12 @@ export default function CommentThread({ comments, isStaff, onChanged, referenceI
           />
         ) : (
           <div className="comment-body"><MarkdownText text={comment.body} issues={referenceIssues} mods={referenceMods} /></div>
+        )}
+        {showReason && (
+          <div className="moderation-note">
+            <span className="moderation-note-label">Rejected</span>
+            <span>{comment.moderation_reason}</span>
+          </div>
         )}
         <div className="comment-actions">
           {!nested && <button className="btn btn-sm issue-action-btn" type="button" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>{replyTo === comment.id ? "Cancel reply" : "Reply"}</button>}
