@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Lucid Blocks Mods — maintenance</title>
+    <meta name="description" content="Lucid Blocks Mods is under maintenance." />
+    <link rel="icon" href="/lucid_blocks.ico" />
+    <style>
+      @font-face {
+        font-family: "NovaRound";
+        src: url("/fonts/NovaRound-Regular.ttf") format("truetype");
+        font-display: swap;
+      }
+      :root {
+        --bg: #121212;
+        --surface: #1a1a1a;
+        --surface-raised: #242424;
+        --line: #2e2e2e;
+        --text: #f2f2f2;
+        --text-muted: #b3b3b3;
+        --text-faint: #808080;
+        --accent: #f2b134;
+        --accent-soft: rgba(242, 177, 52, 0.14);
+        --link: #6db7ff;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(1200px 620px at 50% -12%, #1f1f1f 0%, #121212 62%);
+        color: var(--text);
+        font-family: "NovaRound", system-ui, -apple-system, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .card {
+        width: min(560px, 100%);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 40px 32px;
+        text-align: center;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+      }
+      .icon {
+        width: 72px;
+        height: 72px;
+        image-rendering: pixelated;
+        margin-bottom: 18px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.35; transform: scale(0.7); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dot { animation: none; }
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.2;
+      }
+      p {
+        margin: 0 auto 22px;
+        max-width: 42ch;
+        color: var(--text-muted);
+        line-height: 1.6;
+        font-size: 15px;
+      }
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 24px;
+      }
+      a.btn {
+        display: inline-block;
+        padding: 9px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface-raised);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 14px;
+        transition: border-color 0.15s ease, transform 0.15s ease;
+      }
+      a.btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+      a.btn.accent { background: var(--accent); border-color: var(--accent); color: #17130c; }
+      footer {
+        color: var(--text-faint);
+        font-size: 12px;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+      }
+      footer a { color: var(--link); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img class="icon" src="/lucid_blocks.ico" alt="" width="72" height="72" />
+      <div class="pill"><span class="dot" aria-hidden="true"></span> Under maintenance</div>
+      <h1>Lucid Blocks Mods</h1>
+      <p>
+        The mod page and issue tracker are being rebuilt. Downloads and reporting will be back
+        shortly — thanks for your patience.
+      </p>
+      <div class="links">
+        <a class="btn accent" href="https://discord.gg/lucidblocks" target="_blank" rel="noreferrer">Join the Discord</a>
+        <a class="btn" href="https://store.steampowered.com/app/3495730/Lucid_Blocks/" target="_blank" rel="noreferrer">Steam page</a>
+        <a class="btn" href="https://lucidblocks.com/modding.html" target="_blank" rel="noreferrer">Modding guide</a>
+      </div>
+      <footer>Game art © Lucy B. Locks · unofficial fan site · © putzwirk</footer>
+    </main>
+  </body>
+</html>
