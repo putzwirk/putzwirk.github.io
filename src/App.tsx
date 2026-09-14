@@ -96,14 +96,34 @@ function LucidLayout() {
       </main>
       <footer className="site-footer">
         <div className="wrap footer-bar">
-          <span className="footer-brand">Lucid Blocks Mods</span>
           <span className="footer-note">Game art <span className="copyright-mark">©</span> Lucy B. Locks · unofficial fan site</span>
           <span className="footer-links">
-            <a href="https://store.steampowered.com/app/3495730/Lucid_Blocks/" target="_blank" rel="noreferrer">Steam ↗</a>
-            <a href="https://lucidblocks.com/modding.html" target="_blank" rel="noreferrer">Modding guide ↗</a>
-            <a href="https://discord.gg/lucidblocks" target="_blank" rel="noreferrer">Discord ↗</a>
+            <a className="footer-link-desktop" href="https://store.steampowered.com/app/3495730/Lucid_Blocks/" target="_blank" rel="noreferrer">Game on steam</a>
+            <a className="footer-link-desktop" href="https://lucidblocks.com/modding.html" target="_blank" rel="noreferrer">Modding guide</a>
+            <a href="https://discord.gg/lucidblocks" target="_blank" rel="noreferrer">Discord group</a>
           </span>
-          <span className="footer-copyright"><span className="copyright-mark">©</span> putzwirk 2026</span>
+          <span className="footer-credit">
+            <span className="footer-copyright"><span className="copyright-mark">©</span> putzwirk 2026</span>
+            <a
+              className="kofi-tip"
+              href="https://ko-fi.com/putzwirk/tip"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Feed the bubblabear — tip on Ko-fi"
+              aria-describedby="kofi-tip-hint"
+            >
+              <img className="kofi-bear kofi-bear-sad" src="/sad_bubblebear.png" alt="" />
+              <img className="kofi-bear kofi-bear-happy" src="/happy_bubblebear.png" alt="" />
+              <span className="kofi-tooltip" id="kofi-tip-hint" role="tooltip">
+                Feed the bubblabear
+                <svg className="kofi-face" viewBox="0 0 24 12" aria-hidden="true" focusable="false">
+                  <circle cx="3" cy="4" r="1.9" fill="currentColor" />
+                  <circle cx="21" cy="4" r="1.9" fill="currentColor" />
+                  <path d="M8 10.5h8M12 10.5V6.4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="square" />
+                </svg>
+              </span>
+            </a>
+          </span>
         </div>
       </footer>
     </>
