@@ -121,6 +121,12 @@ export default function ModDetail() {
           <p className="intro intro-tight">{mod.tagline}</p>
         </div>
       </div>
+      {mod.ai_generated && (
+        <div className="ai-disclaimer" role="note">
+          <span className="ai-disclaimer-icon" aria-hidden="true">✦</span>
+          <span><b>AI-generated content.</b> This mod is AI-generated. It's up to you to decide whether to use it or not.</span>
+        </div>
+      )}
       {(media.tags ?? []).length > 0 && (
         <div className="mod-tags">
           {(media.tags ?? []).map((tag) => <span className="chip" key={tag}>{tag}</span>)}

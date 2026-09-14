@@ -7,6 +7,7 @@ export interface Mod {
   issue_label: string;
   sort_order: number;
   required_mods: string[];
+  ai_generated?: boolean;
   created_at: string;
 }
 

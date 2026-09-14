@@ -43,6 +43,7 @@ export default function Home() {
                 <div className="mod-slot-author">by {mod.author || "Putzwirk"}</div>
                 <div className="mod-slot-tagline">{mod.tagline}</div>
                 <div className="mod-slot-chips">
+                  {mod.ai_generated && <span className="chip chip-ai" title="Contains AI-generated content">AI</span>}
                   {latest && <span className="chip chip-version">v{latest.version}</span>}
                   {latest && <span className="chip">Lucid Blocks v.{latest.game_version}</span>}
                   {openIssues > 0 && (

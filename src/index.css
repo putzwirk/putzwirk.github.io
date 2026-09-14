@@ -3188,6 +3188,50 @@ details[open] .chevron {
   color: var(--danger-hover);
 }
 
+.chip-ai {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+}
+
+.ai-generated-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.ai-generated-option input {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+}
+
+.ai-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ai-disclaimer-icon {
+  flex: none;
+  color: var(--accent-hover);
+  line-height: 1.4;
+}
+
+.ai-disclaimer b {
+  color: var(--accent-hover);
+}
+
 .event-actor {
   color: var(--text);
 }

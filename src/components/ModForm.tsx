@@ -21,7 +21,7 @@ function parseTags(value: string): string[] {
 interface Props {
   mod: (ModWithVersions & ModMedia) | null;
   availableMods: Mod[];
-  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number; required_mods: string[]; tags: string[]; banner_path: string | null; screenshots: string[] }) => Promise<void>;
+  onSubmit: (data: { id: string; name: string; tagline: string; description: string; author: string; issue_label: string; sort_order: number; required_mods: string[]; tags: string[]; banner_path: string | null; screenshots: string[]; ai_generated: boolean }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -39,6 +39,7 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
     return ["QualiaMods"];
   });
   const [tags, setTags] = useState(() => (mod?.tags ?? []).join(", "));
+  const [aiGenerated, setAiGenerated] = useState(mod?.ai_generated ?? false);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPath] = useState<string | null>(mod?.banner_path ?? null);
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
@@ -94,7 +95,7 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
       if (bannerFile) nextBannerPath = await uploadModAsset(modId, bannerFile, "banner");
       const nextScreenshots = [...screenshotPaths];
       for (const screenshot of screenshotFiles) nextScreenshots.push(await uploadModAsset(modId, screenshot, "screenshot"));
-      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder, required_mods: requiredMods, tags: parseTags(tags), banner_path: nextBannerPath, screenshots: nextScreenshots });
+      await onSubmit({ id, name, tagline, description, author, issue_label: issueLabel, sort_order: sortOrder, required_mods: requiredMods, tags: parseTags(tags), banner_path: nextBannerPath, screenshots: nextScreenshots, ai_generated: aiGenerated });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -157,6 +158,12 @@ export default function ModForm({ mod, availableMods, onSubmit, onCancel }: Prop
       <div className="form-group">
         <label>Tags (comma separated)</label>
         <input className="form-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Gameplay, Quality of Life, Client-side" />
+      </div>
+      <div className="form-group">
+        <label className="ai-generated-option">
+          <input type="checkbox" checked={aiGenerated} onChange={(e) => setAiGenerated(e.target.checked)} />
+          <span>This mod contains AI-generated content</span>
+        </label>
       </div>
       <div className="form-row">
         <div className="form-group">

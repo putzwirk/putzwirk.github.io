@@ -1,0 +1,1 @@
+alter table public.mods add column if not exists ai_generated boolean not null default false;
