@@ -124,7 +124,7 @@ export default function ModDetail() {
       {mod.ai_generated && (
         <div className="ai-disclaimer" role="note">
           <span className="ai-disclaimer-icon" aria-hidden="true">✦</span>
-          <span><b>AI-generated content.</b> This mod is AI-generated. It's up to you to decide whether to use it or not.</span>
+          <span><b>AI-generated content.</b> This mod is AI-assisted. It's up to you to decide whether to use it or not.</span>
         </div>
       )}
       {(media.tags ?? []).length > 0 && (
