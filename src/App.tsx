@@ -56,7 +56,7 @@ function LucidLayout() {
     <>
       {settings.animation && (
         <Suspense fallback={null}>
-          <BubbleBears key={`${settings.count}-${settings.speed}-${settings.hitForce}`} />
+          <BubbleBears key={`${settings.count}-${settings.speed}-${settings.hitForce}`} dim={settings.dim} />
         </Suspense>
       )}
       <header className={`site-header${isAdmin ? " site-header-admin" : ""}`}>

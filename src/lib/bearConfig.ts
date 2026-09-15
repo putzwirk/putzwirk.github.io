@@ -10,6 +10,7 @@ export const bubbleBearConfig = {
   scale: Math.max(0.05, num(import.meta.env.VITE_BUBBLEBEAR_SCALE, 1)),
   dprCap: Math.max(0.5, num(import.meta.env.VITE_BUBBLEBEAR_DPR, 2)),
   gravity: Math.max(0, num(import.meta.env.VITE_BUBBLEBEAR_GRAVITY, 3600000)),
+  dim: Math.min(70, Math.max(0, num(import.meta.env.VITE_BUBBLEBEAR_DIM, 30))),
   hitForce: 0.2,
 };
 

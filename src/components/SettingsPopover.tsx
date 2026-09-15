@@ -6,6 +6,7 @@ export interface BearSettings {
   count: number;
   speed: number;
   hitForce: number;
+  dim: number;
   animation: boolean;
 }
 
@@ -35,7 +36,7 @@ export default function SettingsPopover({ settings, onChange }: SettingsPopoverP
     };
   }, [open]);
 
-  const update = (key: "count" | "speed" | "hitForce", value: number) => {
+  const update = (key: "count" | "speed" | "hitForce" | "dim", value: number) => {
     const next = { ...settings, [key]: value };
     bubbleBearConfig[key] = key === "speed" ? value * 2 : value;
     saveBearSettings(next);
@@ -68,6 +69,10 @@ export default function SettingsPopover({ settings, onChange }: SettingsPopoverP
         <label className="settings-slider">
           <span><b>Hit force</b><output>{settings.hitForce.toFixed(1)}×</output></span>
           <input type="range" min="0.2" max="2" step="0.1" value={settings.hitForce} onChange={(event) => update("hitForce", Number(event.target.value))} />
+        </label>
+        <label className="settings-slider">
+          <span><b>Dim</b><output>{settings.dim}%</output></span>
+          <input type="range" min="0" max="70" step="1" value={settings.dim} onChange={(event) => update("dim", Number(event.target.value))} />
         </label>
       </div>
     </div>

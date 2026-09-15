@@ -1024,7 +1024,7 @@ function integrateGrabbed(bear: Bear, dt: number, px: number, py: number, cvx: n
   updateFrame(bear);
 }
 
-export default function BubbleBears() {
+export default function BubbleBears({ dim = 0 }: { dim?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -1800,7 +1800,7 @@ export default function BubbleBears() {
 
   return (
     <div className="bubblebears" aria-hidden="true">
-      <canvas ref={canvasRef} className="bubblebears-canvas" />
+      <canvas ref={canvasRef} className="bubblebears-canvas" style={dim > 0 ? { filter: `brightness(${(100 - dim) / 100})` } : undefined} />
     </div>
   );
 }
