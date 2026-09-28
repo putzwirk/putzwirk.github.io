@@ -50,6 +50,8 @@ export interface McMod {
   type: "mod" | "modpack";
 }
 
+import { invokeOrThrow } from "./functions";
+
 export interface McVersion {
   id: string;
   name: string;
@@ -62,6 +64,7 @@ export interface McVersion {
   source: "curseforge";
   url: string;
   filename: string;
+  release: "release" | "beta" | "alpha";
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -166,6 +169,7 @@ function loadSnapshot(): Promise<Snapshot | null> {
 
 function cfFileToVersion(file: CfFile, changelog: string): McVersion {
   const { loaders, gameVersions } = splitCfTags(file.versions);
+  const type = file.type?.toLowerCase();
   return {
     id: `cf-${file.id}`,
     name: file.display || file.name,
@@ -178,6 +182,7 @@ function cfFileToVersion(file: CfFile, changelog: string): McVersion {
     source: "curseforge",
     url: cfFileDirectUrl(file.url),
     filename: file.name || file.display,
+    release: type === "alpha" ? "alpha" : type === "beta" ? "beta" : "release",
   };
 }
 
@@ -197,6 +202,7 @@ function snapshotFileToVersion(slug: string, cfType: string, id: string, file: S
     source: "curseforge",
     url: `${curseforgeProjectUrl(cfType, slug)}/download/${id}`,
     filename: file.name || `File ${id}`,
+    release: file.releaseType === "A" ? "alpha" : file.releaseType === "B" ? "beta" : "release",
   };
 }
 
@@ -249,7 +255,97 @@ function buildModFromSnapshot(slug: string, type: string, snap: SnapshotProject)
   };
 }
 
+interface CfApiMod {
+  id: number;
+  slug: string;
+  name: string;
+  summary: string;
+  description: string;
+  logoUrl: string | null;
+  downloadCount: number;
+  dateCreated: string;
+  authors: string[];
+  categories: string[];
+  websiteUrl: string | null;
+  type: string;
+  loaders: string[];
+  gameVersions: string[];
+  fileCount: number;
+}
+
+interface CfApiFile {
+  id: number;
+  fileName: string;
+  displayName: string;
+  fileDate: string;
+  releaseType: number;
+  gameVersions: string[];
+  downloadCount: number;
+  downloadUrl: string;
+  changelog: string;
+}
+
+function releaseLabel(releaseType: number): "release" | "beta" | "alpha" {
+  return releaseType === 3 ? "alpha" : releaseType === 2 ? "beta" : "release";
+}
+
+function buildModFromApi(p: { slug: string; type: string }, m: CfApiMod): McMod {
+  return {
+    slug: p.slug,
+    title: m.name,
+    description: m.summary ?? "",
+    longDescription: m.description ?? "",
+    iconUrl: m.logoUrl,
+    downloads: m.downloadCount ?? 0,
+    loaders: m.loaders ?? [],
+    gameVersions: m.gameVersions ?? [],
+    categories: m.categories ?? [],
+    curseforgeUrl: curseforgeProjectUrl(p.type, p.slug),
+    cfSlug: p.slug,
+    cfType: p.type,
+    type: p.type === "modpacks" ? "modpack" : "mod",
+  };
+}
+
+function apiFileToVersion(file: CfApiFile, snapshotChangelog: string): McVersion {
+  const { loaders, gameVersions } = splitCfTags(file.gameVersions);
+  const changelog = file.changelog ? htmlToText(file.changelog) : snapshotChangelog;
+  return {
+    id: `cf-${file.id}`,
+    name: file.displayName || file.fileName,
+    versionNumber: null,
+    changelog,
+    gameVersions,
+    loaders,
+    downloads: file.downloadCount ?? 0,
+    date: file.fileDate,
+    source: "curseforge",
+    url: file.downloadUrl || cfFileDirectUrl(`https://www.curseforge.com/files/${file.id}`),
+    filename: file.fileName,
+    release: releaseLabel(file.releaseType),
+  };
+}
+
 export async function fetchMcMods(): Promise<McMod[]> {
+  const cached = modCache.get("list");
+  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.value;
+  try {
+    const { mods } = await invokeOrThrow<{ mods: CfApiMod[] }>("cf-proxy", { action: "mods" });
+    const bySlug = new Map(mods.map((m) => [m.slug, m]));
+    const mapped = CF_PROJECTS.map((p) => {
+      const m = bySlug.get(p.slug);
+      return m ? buildModFromApi(p, m) : null;
+    }).filter((m): m is McMod => m !== null);
+    if (mapped.length === 0) throw new Error("Empty mod list");
+    mapped.sort((a, b) => b.downloads - a.downloads);
+    modCache.set("list", { at: Date.now(), value: mapped });
+    return mapped;
+  } catch {
+    return fetchMcModsLegacy();
+  }
+}
+
+async function fetchMcModsLegacy(): Promise<McMod[]> {
   const cached = modCache.get("list");
   if (cached && Date.now() - cached.at < CACHE_TTL) return cached.value;
   const [snapshot, ...cfResults] = await Promise.all([
@@ -294,6 +390,31 @@ export function maxGameVersion(versions: string[]): string | null {
 }
 
 export async function fetchMcModDetail(slug: string): Promise<{ mod: McMod; versions: McVersion[] }> {
+  const cached = detailCache.get(slug);
+  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.value;
+  try {
+    const mods = await fetchMcMods();
+    const mod = mods.find((m) => m.slug === slug);
+    if (!mod) throw new Error("Mod not found.");
+    const { files } = await invokeOrThrow<{ files: CfApiFile[] }>("cf-proxy", { action: "files", slug });
+    const snapshot = await loadSnapshot();
+    const snapFiles = snapshot?.projects[slug]?.files ?? {};
+    const versions = files
+      .map((file) => {
+        const raw = snapFiles[String(file.id)]?.changelog ?? null;
+        return apiFileToVersion(file, raw ? htmlToText(raw) : "");
+      })
+      .sort((a, b) => +new Date(b.date || 0) - +new Date(a.date || 0));
+    if (versions.length === 0) throw new Error("Empty version list");
+    const result = { mod, versions };
+    detailCache.set(slug, { at: Date.now(), value: result });
+    return result;
+  } catch {
+    return fetchMcModDetailLegacy(slug);
+  }
+}
+
+async function fetchMcModDetailLegacy(slug: string): Promise<{ mod: McMod; versions: McVersion[] }> {
   const cached = detailCache.get(slug);
   if (cached && Date.now() - cached.at < CACHE_TTL) return cached.value;
   const mods = await fetchMcMods();

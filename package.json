@@ -10,7 +10,7 @@
     "publish": "node scripts/publish-mod.mjs",
     "deploy": "bash scripts/deploy.sh",
     "test:rls": "node scripts/rls-test/run.mjs",
-    "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/submit-comment/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts supabase/functions/notify/index.ts",
+    "check:functions": "deno check supabase/functions/submit-issue/index.ts supabase/functions/submit-comment/index.ts supabase/functions/create-upload-url/index.ts supabase/functions/download/index.ts supabase/functions/purge-attachments/index.ts supabase/functions/notify/index.ts supabase/functions/cf-proxy/index.ts",
     "test:functions": "deno test --allow-env supabase/functions/_shared/",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install",

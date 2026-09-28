@@ -121,6 +121,7 @@ export default function MinecraftModDetail() {
               <summary className="version-summary">
                 <span className="version-summary-left">
                   {v.versionNumber && <span className="chip chip-version">v{v.versionNumber}</span>}
+                  {v.release !== "release" && <span className="chip">{v.release}</span>}
                   {v.gameVersions.slice(-2).reverse().map((game) => <span className="chip" key={game}>MC {game}</span>)}
                   {v.loaders.slice(0, 2).map((loader) => <LoaderTag key={loader} loader={loader} />)}
                   <span className="chip version-date">{formatDateTime(v.date)}</span>
