@@ -8,6 +8,7 @@ export async function fetchModsWithVersions(): Promise<ModWithVersions[]> {
   const { data, error } = await supabase
     .from("mods")
     .select("*, mod_versions(*)")
+    .not("id", "like", "mc-%")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false, foreignTable: "mod_versions" });
 

@@ -13,9 +13,13 @@ export interface BearSettings {
 interface SettingsPopoverProps {
   settings: BearSettings;
   onChange: (settings: BearSettings) => void;
+  title?: string;
+  countLabel?: string;
+  offImage?: string | null;
+  storageKey?: string;
 }
 
-export default function SettingsPopover({ settings, onChange }: SettingsPopoverProps) {
+export default function SettingsPopover({ settings, onChange, title = "BubbleBears", countLabel = "Bears", offImage = "/1381479053650952313.webp", storageKey }: SettingsPopoverProps) {
   const [open, setOpen] = useState(false);
   const [rendererSupported] = useState(supportsBubbleBearRenderer);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -39,13 +43,13 @@ export default function SettingsPopover({ settings, onChange }: SettingsPopoverP
   const update = (key: "count" | "speed" | "hitForce" | "dim", value: number) => {
     const next = { ...settings, [key]: value };
     bubbleBearConfig[key] = key === "speed" ? value * 2 : value;
-    saveBearSettings(next);
+    saveBearSettings(next, storageKey);
     onChange(next);
   };
 
   const toggleAnimation = (enabled: boolean) => {
     const next = { ...settings, animation: enabled };
-    saveBearSettings(next);
+    saveBearSettings(next, storageKey);
     onChange(next);
   };
 
@@ -57,9 +61,9 @@ export default function SettingsPopover({ settings, onChange }: SettingsPopoverP
         Settings
       </button>
       <div className="settings-popover" aria-hidden={!open}>
-        <div className="settings-heading settings-heading-toggle"><span>BubbleBears</span><span className="animation-toggle-label"><img className={`animation-off-image${settings.animation ? " hidden" : ""}`} src="/1381479053650952313.webp" alt="BubbleBear animation" /><input type="checkbox" role="switch" aria-label="Toggle BubbleBears animation" aria-checked={settings.animation} checked={settings.animation} onChange={(event) => toggleAnimation(event.target.checked)} /></span></div>
+        <div className="settings-heading settings-heading-toggle"><span>{title}</span><span className="animation-toggle-label">{offImage && <img className={`animation-off-image${settings.animation ? " hidden" : ""}`} src={offImage} alt={`${title} animation`} />}{!offImage && !settings.animation && <span className="animation-off-label">Off</span>}<input type="checkbox" role="switch" aria-label={`Toggle ${title} animation`} aria-checked={settings.animation} checked={settings.animation} onChange={(event) => toggleAnimation(event.target.checked)} /></span></div>
         <label className="settings-slider">
-          <span><b>Bears</b><output>{settings.count}</output></span>
+          <span><b>{countLabel}</b><output>{settings.count}</output></span>
           <input type="range" min="1" max="10" step="1" value={settings.count} onChange={(event) => update("count", Number(event.target.value))} />
         </label>
         <label className="settings-slider">
