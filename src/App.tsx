@@ -22,16 +22,19 @@ const MinecraftBlocks = lazy(() => import("./components/MinecraftBlocks"));
 const MinecraftHome = lazy(() => import("./pages/MinecraftHome"));
 const MinecraftModDetail = lazy(() => import("./pages/MinecraftModDetail"));
 const MinecraftIssueDetail = lazy(() => import("./pages/MinecraftIssueDetail"));
+const MinecraftIdeas = lazy(() => import("./pages/MinecraftIdeas"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = pathname.startsWith("/lucidblocks")
-      ? "Lucid Blocks Mods"
-      : pathname.startsWith("/minecraft")
-        ? "Minecraft Mods"
-        : "Putzwirk's page";
+    document.title = pathname.startsWith("/admin")
+      ? "Admin"
+      : pathname.startsWith("/lucidblocks")
+        ? "Lucid Blocks Mods"
+        : pathname.startsWith("/minecraft")
+          ? "Minecraft Mods"
+          : "Putzwirk's page";
   }, [pathname]);
   return null;
 }
@@ -47,7 +50,6 @@ function LucidLayout() {
   const { session, isStaff } = useAuth();
   const signedIn = isSignedInSession(session);
   const [settings, setSettings] = useState<BearSettings>(loadBearSettings);
-  const isAdmin = location.pathname.startsWith("/lucidblocks/admin");
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!event.ctrlKey || !event.altKey || event.shiftKey || event.metaKey) return;
@@ -55,7 +57,7 @@ function LucidLayout() {
       const target = event.target as HTMLElement | null;
       if (target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
       event.preventDefault();
-      navigate(isStaff ? "/lucidblocks/admin" : "/lucidblocks/login");
+      navigate(isStaff ? "/admin" : "/lucidblocks/login");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -67,7 +69,7 @@ function LucidLayout() {
           <BubbleBears key={`${settings.count}-${settings.speed}-${settings.hitForce}`} dim={settings.dim} />
         </Suspense>
       )}
-      <header className={`site-header${isAdmin ? " site-header-admin" : ""}`}>
+      <header className="site-header">
         <div className="wrap">
           <Link className="site-title" to="/lucidblocks/mods">
             <img className="site-title-icon" src="/lucid_blocks-64.png" alt="" width={26} height={26} />
@@ -96,9 +98,6 @@ function LucidLayout() {
             <Route path="my" element={<MyReports />} />
             <Route path="ideas" element={<Ideas />} />
             <Route path="login" element={<Login />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="admin/submissions" element={<Submissions />} />
-            <Route path="admin/comments" element={<Admin commentsOnly />} />
           </Routes>
         </Suspense>
       </main>
@@ -160,6 +159,9 @@ function MinecraftLayout() {
             <Link to="/minecraft/mods" className={location.pathname.startsWith("/minecraft/mods") ? "active" : ""}>
               Mods
             </Link>
+            <Link to="/minecraft/ideas" className={location.pathname.startsWith("/minecraft/ideas") ? "active" : ""}>
+              Ideas
+            </Link>
             <SettingsPopover settings={settings} onChange={setSettings} title="Blocks" countLabel="Blocks" offImage={null} storageKey={MINECRAFT_STORAGE_KEY} />
             <AuthMenu />
             <NotificationBell />
@@ -172,6 +174,8 @@ function MinecraftLayout() {
             <Route path="mods" element={<MinecraftHome />} />
             <Route path="mods/:slug" element={<MinecraftModDetail />} />
             <Route path="mods/:slug/issues/:issueId" element={<MinecraftIssueDetail />} />
+            <Route path="ideas" element={<MinecraftIdeas />} />
+            <Route path="ideas/:issueId" element={<MinecraftIssueDetail />} />
           </Routes>
         </Suspense>
       </main>
@@ -208,6 +212,37 @@ function MinecraftLayout() {
   );
 }
 
+function AdminLayout() {
+  const { session } = useAuth();
+  const signedIn = isSignedInSession(session);
+  return (
+    <>
+      <header className="site-header site-header-admin">
+        <div className="wrap">
+          <Link className="site-title" to="/admin">
+            <span className="site-title-text">Admin</span>
+          </Link>
+          <nav className={`site-nav${signedIn ? "" : " site-nav-guest"}`}>
+            <Link to="/lucidblocks/mods">Mods</Link>
+            <Link to="/minecraft/mods">Minecraft</Link>
+            <AuthMenu />
+            <NotificationBell />
+          </nav>
+        </div>
+      </header>
+      <main className="wrap">
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="" element={<Admin />} />
+            <Route path="submissions" element={<Submissions />} />
+            <Route path="comments" element={<Admin commentsOnly />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <Suspense fallback={null}>
@@ -216,6 +251,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/lucidblocks/*" element={<LucidLayout />} />
         <Route path="/minecraft/*" element={<MinecraftLayout />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
         <Route path="/*" element={<LegacyRedirect />} />
       </Routes>
     </Suspense>

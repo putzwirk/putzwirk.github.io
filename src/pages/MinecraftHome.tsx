@@ -23,10 +23,10 @@ export default function MinecraftHome() {
       <div className="hero">
         <h1>Minecraft Mods</h1>
         <p className="intro">
-          Minecraft mods by Neuromuser, hosted on CurseForge. Pick one to see its
-          versions and report issues. Downloads redirect to CurseForge, no files live here.
+          Pick one to see its versions and report issues.
         </p>
         <p className="mod-meta-row">
+          <a className="btn btn-sm" href="https://modrinth.com/user/Neuromuser" target="_blank" rel="noreferrer">Modrinth profile</a>
           <a className="btn btn-sm" href={CURSEFORGE_MEMBER_URL} target="_blank" rel="noreferrer">CurseForge projects</a>
         </p>
       </div>

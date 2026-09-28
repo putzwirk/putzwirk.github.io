@@ -85,7 +85,7 @@ export default function AuthMenu() {
       </button>
       <div className="auth-popover" aria-hidden={!open}>
         <Link className="auth-item" to="/lucidblocks/my" onClick={() => setOpen(false)}>My reports</Link>
-        {isStaff && <Link className="auth-item" to="/lucidblocks/admin" onClick={() => setOpen(false)}>Admin panel</Link>}
+        {isStaff && <Link className="auth-item" to="/admin" onClick={() => setOpen(false)}>Admin panel</Link>}
         <button className="auth-item" type="button" onClick={() => { setOpen(false); signOut(); }}>Sign out</button>
         {error && <p className="auth-error" role="alert">{error}</p>}
       </div>

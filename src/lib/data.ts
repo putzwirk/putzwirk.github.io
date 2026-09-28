@@ -205,6 +205,21 @@ export async function fetchIdeas(): Promise<Issue[]> {
   return (data ?? []) as Issue[];
 }
 
+export async function fetchMinecraftIdeas(): Promise<Issue[]> {
+  const { data, error } = await supabase
+    .from("issues")
+    .select("*")
+    .eq("type", "idea")
+    .eq("mod_id", "mc-ideas")
+    .neq("moderation_status", "rejected")
+    .is("deleted_at", null)
+    .order("votes", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as Issue[];
+}
+
 export async function fetchIssueCount(): Promise<number> {
   const { count, error } = await supabase
     .from("issues")

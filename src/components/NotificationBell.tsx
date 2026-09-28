@@ -165,7 +165,7 @@ export default function NotificationBell() {
             <ul className="notification-popover-list">
               {pendingIssues.slice(0, 4).map((issue) => (
                 <li key={issue.id}>
-                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/lucidblocks/admin/submissions"); }}>
+                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/admin/submissions"); }}>
                     <span className="notification-popover-label">{issue.type === "bug" ? "Bug submission" : "Idea submission"}</span>
                     <span className="notification-popover-detail">{issue.title} — by {issue.author_name}</span>
                     <span className="notification-popover-time">{formatDateTime(issue.created_at)}</span>
@@ -174,7 +174,7 @@ export default function NotificationBell() {
               ))}
               {pendingComments.slice(0, 4).map((comment) => (
                 <li key={comment.id}>
-                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/lucidblocks/admin/comments"); }}>
+                  <button className="notification-popover-item unread" type="button" onClick={() => { setOpen(false); navigate("/admin/comments"); }}>
                     <span className="notification-popover-label">Comment</span>
                     <span className="notification-popover-detail">{comment.body.length > 90 ? `${comment.body.slice(0, 89)}…` : comment.body} — on {comment.issues?.title ?? "an issue"}</span>
                     <span className="notification-popover-time">{formatDateTime(comment.created_at)}</span>

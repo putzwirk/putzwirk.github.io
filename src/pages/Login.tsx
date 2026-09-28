@@ -29,7 +29,7 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    navigate("/lucidblocks/admin");
+    navigate("/admin");
   };
 
   return (

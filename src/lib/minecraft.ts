@@ -32,6 +32,7 @@ export const CF_PROJECTS: Array<{ slug: string; type: string }> = [
 ];
 
 export const mcModId = (slug: string) => `mc-${slug}`;
+export const MC_IDEAS_MOD_ID = "mc-ideas";
 
 export interface McMod {
   slug: string;

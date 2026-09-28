@@ -24,7 +24,7 @@ test.describe.serial("issue moderation and discussion", () => {
 
   test("admin approves the submission and it becomes public", async ({ page, browser }) => {
     await signInAsAdmin(page);
-    await page.goto("/lucidblocks/admin/submissions");
+    await page.goto("/admin/submissions");
 
     const moderationItem = page.getByRole("article").filter({ hasText: issueTitle });
     await expect(moderationItem).toBeVisible();

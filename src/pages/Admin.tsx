@@ -351,14 +351,14 @@ export default function Admin({ submissionsOnly = false, commentsOnly = false }:
         {managementPage && <button className="btn btn-accent admin-add-mod-btn" onClick={() => { setEditingMod(null); setShowModForm(true); }}>Add mod</button>}
       </div>
       <nav className="staff-view-nav" aria-label="Moderation views">
-        <Link to="/lucidblocks/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
-        <Link to="/lucidblocks/admin/submissions" className={submissionsPage ? "active" : ""}>
+        <Link to="/admin" className={managementPage ? "active" : ""}>Manage mods</Link>
+        <Link to="/admin/submissions" className={submissionsPage ? "active" : ""}>
           <span className="submissions-tab-label">
             Submissions
             {pendingIssues.length > 0 && <span className="pending-count-dot" aria-label={`${pendingIssues.length} pending submissions`} />}
           </span>
         </Link>
-        <Link to="/lucidblocks/admin/comments" className={commentsPage ? "active" : ""}>
+        <Link to="/admin/comments" className={commentsPage ? "active" : ""}>
           <span className="submissions-tab-label">
             Comments
             {pendingComments.length > 0 && <span className="pending-count-dot" aria-label={`${pendingComments.length} pending comments`} />}

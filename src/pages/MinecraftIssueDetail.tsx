@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Issue, IssueComment, IssueEvent, IssueState } from "../types";
 import { createComment, deleteIssue, fetchAllPublicIssues, fetchComments, fetchIssueById, fetchIssueEvents, fetchMyVotes, subscribeToIssue, toggleVote, updateIssueState } from "../lib/data";
-import { mcModId } from "../lib/minecraft";
+import { MC_IDEAS_MOD_ID, mcModId } from "../lib/minecraft";
 import { useAuth } from "../context/AuthContext";
 import MarkdownText from "../components/MarkdownText";
 import AttachmentGallery from "../components/AttachmentGallery";
@@ -32,12 +32,14 @@ export default function MinecraftIssueDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [draftState, setDraftState] = useState<IssueState | null>(null);
-  const backHref = `/minecraft/mods/${slug}`;
+  const backHref = slug ? `/minecraft/mods/${slug}` : "/minecraft/ideas";
+  const backLabel = slug ? null : "Ideas";
 
   const load = useCallback(async () => {
     if (!issueId) return;
     const fetched = await fetchIssueById(issueId);
-    if (fetched && slug && fetched.issue.mod_id !== mcModId(slug)) {
+    const expectedModId = slug ? mcModId(slug) : MC_IDEAS_MOD_ID;
+    if (fetched && fetched.issue.mod_id !== expectedModId) {
       setDetail(null);
       return;
     }
@@ -66,7 +68,7 @@ export default function MinecraftIssueDetail() {
   if (!detail) {
     return (
       <>
-        <Link className="back-link" to={backHref}>← Mod</Link>
+        <Link className="back-link" to={backHref}>← {backLabel ?? "Mod"}</Link>
         <p className="empty-state">Issue not found, or it is still awaiting moderation.</p>
       </>
     );
@@ -91,7 +93,7 @@ export default function MinecraftIssueDetail() {
 
   return (
     <>
-      <Link className="back-link" to={backHref}>← {modName ?? "Mod"}</Link>
+      <Link className="back-link" to={backHref}>← {backLabel ?? modName ?? "Mod"}</Link>
       <div className="issue-detail-head">
         <div className="issue-row-head">
           <span className={`type-badge ${isIdea ? "type-feature" : "type-bug"}`}>{isIdea ? "Feature" : "Bug"}</span>
