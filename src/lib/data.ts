@@ -177,6 +177,28 @@ export async function fetchAllPublicIssues(): Promise<Issue[]> {
   return (data ?? []) as Issue[];
 }
 
+export async function fetchMinecraftIssues(): Promise<Issue[]> {
+  const { data, error } = await supabase.from("issues").select("*").like("mod_id", "mc-%").is("deleted_at", null).order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Issue[];
+}
+
+export async function fetchMinecraftOpenIssueCounts(): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from("issues")
+    .select("mod_id")
+    .eq("type", "bug")
+    .eq("status", "open")
+    .like("mod_id", "mc-%")
+    .eq("moderation_status", "approved");
+
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? []) as { mod_id: string }[]) {
+    counts[row.mod_id] = (counts[row.mod_id] ?? 0) + 1;
+  }
+  return counts;
+}
 export async function fetchIssuesByMod(modId: string): Promise<Issue[]> {
   const { data, error } = await supabase
     .from("issues")

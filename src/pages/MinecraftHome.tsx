@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CURSEFORGE_MEMBER_URL, fetchMcMods, type McMod } from "../lib/minecraft";
+import { CURSEFORGE_MEMBER_URL, fetchMcMods, mcModId, type McMod } from "../lib/minecraft";
+import { fetchMinecraftOpenIssueCounts } from "../lib/data";
 import LoaderTag from "../components/LoaderTag";
 
 export default function MinecraftHome() {
   const [mods, setMods] = useState<McMod[]>([]);
+  const [issueCounts, setIssueCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchMcMods()
-      .then(setMods)
+    Promise.all([fetchMcMods(), fetchMinecraftOpenIssueCounts().catch(() => ({} as Record<string, number>))])
+      .then(([m, counts]) => {
+        setMods(m);
+        setIssueCounts(counts);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Could not load mods."))
       .finally(() => setLoading(false));
   }, []);
@@ -31,7 +36,9 @@ export default function MinecraftHome() {
         </p>
       </div>
       <div className="mod-grid">
-        {mods.map((mod) => (
+        {mods.map((mod) => {
+          const openIssues = issueCounts[mcModId(mod.slug)] ?? 0;
+          return (
           <Link key={mod.slug} className="mod-slot" to={`/minecraft/mods/${mod.slug}`}>
             {mod.iconUrl ? (
               <img className="slot-glyph slot-glyph-img" src={mod.iconUrl} alt="" width={56} height={56} loading="lazy" />
@@ -46,11 +53,15 @@ export default function MinecraftHome() {
                 <span className="chip">{mod.downloads.toLocaleString()} downloads</span>
                 {mod.type === "modpack" && <span className="chip">modpack</span>}
                 {mod.loaders.slice(0, 3).map((loader) => <LoaderTag key={loader} loader={loader} />)}
+                {openIssues > 0 && (
+                  <span className="chip chip-issues">{openIssues} open issue{openIssues === 1 ? "" : "s"}</span>
+                )}
               </div>
             </div>
             <div className="mod-slot-arrow" aria-hidden="true">→</div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </>
   );

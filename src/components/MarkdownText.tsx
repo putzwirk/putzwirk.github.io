@@ -7,6 +7,17 @@ import AttachmentGallery from "./AttachmentGallery";
 import ConfirmDialog from "./ConfirmDialog";
 import { formatDateTime } from "../lib/formatDate";
 
+function issuePath(issue: Issue): string {
+  if (issue.mod_id?.startsWith("mc-")) {
+    return issue.mod_id === "mc-ideas" ? `/minecraft/ideas/${issue.id}` : `/minecraft/mods/${issue.mod_id.slice(3)}/issues/${issue.id}`;
+  }
+  return `/lucidblocks/issues/${issue.id}`;
+}
+
+function modPath(mod: Mod): string {
+  return mod.id.startsWith("mc-") ? `/minecraft/mods/${mod.id.slice(3)}` : `/lucidblocks/mods/${mod.id}`;
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
 }
@@ -34,7 +45,7 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
     const withReferences = segment.replace(/\[\[([^\]]+)\]\]/g, (_match, id: string) => {
       const issue = issueMap.get(id);
       const mod = modMap.get(id);
-      return issue ? `<span class="issue-reference issue-reference-${issue.type === "bug" ? "bug" : "idea"}" role="button" tabindex="0" data-issue-id="${issue.id}">${issue.title} / by ${issue.author_name}</span>` : mod ? `<a class="mod-reference" href="/lucidblocks/mods/${mod.id}">${mod.name}</a>` : _match;
+      return issue ? `<span class="issue-reference issue-reference-${issue.type === "bug" ? "bug" : "idea"}" role="button" tabindex="0" data-issue-id="${issue.id}">${issue.title} / by ${issue.author_name}</span>` : mod ? `<a class="mod-reference" href="${modPath(mod)}">${mod.name}</a>` : _match;
     });
     return withReferences.replace(/\|\|([^|\n]+?)\|\|/g, (_match, inner: string) => {
       const innerHtml = marked.parseInline(inner, { breaks: true, gfm: true, async: false }) as string;
@@ -88,7 +99,7 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
     clearHoverTimer();
     setPreviewVisible(false);
     setHovered(null);
-    navigate(`/lucidblocks/issues/${issue.id}`, { state: { from: location.pathname } });
+    navigate(issuePath(issue), { state: { from: location.pathname } });
   };
   return <>
     <div className="markdown-text" onClick={(event) => {
@@ -109,7 +120,7 @@ export default function MarkdownText({ text, issues = [], mods = [] }: { text: s
       if (link) {
         if (link.href.startsWith(window.location.origin)) {
           const href = link.getAttribute("href") ?? "";
-          if (href.startsWith("/lucidblocks/")) {
+          if (href.startsWith("/lucidblocks/") || href.startsWith("/minecraft/")) {
             event.preventDefault();
             navigate(href, { state: { from: location.pathname } });
           }

@@ -6,6 +6,8 @@ export const MINECRAFT_STORAGE_KEY = "minecraft-block-settings";
 
 export interface BearDefaults {
   dim?: number;
+  speed?: number;
+  hitForce?: number;
 }
 
 export function loadBearSettings(storageKey = DEFAULT_STORAGE_KEY, defaults: BearDefaults = {}): BearSettings {
@@ -13,8 +15,8 @@ export function loadBearSettings(storageKey = DEFAULT_STORAGE_KEY, defaults: Bea
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null") as Partial<BearSettings> | null;
     const next = {
       count: Math.min(10, Math.max(1, saved?.count ?? bubbleBearConfig.count)),
-      speed: Math.min(2, Math.max(1, saved?.speed ?? bubbleBearConfig.speed / 2)),
-      hitForce: Math.min(2, Math.max(0.2, saved?.hitForce ?? bubbleBearConfig.hitForce)),
+      speed: Math.min(2, Math.max(1, saved?.speed ?? defaults.speed ?? bubbleBearConfig.speed / 2)),
+      hitForce: Math.min(2, Math.max(0.2, saved?.hitForce ?? defaults.hitForce ?? bubbleBearConfig.hitForce)),
       dim: Math.min(70, Math.max(0, saved?.dim ?? defaults.dim ?? bubbleBearConfig.dim)),
       animation: saved?.animation ?? true,
     };

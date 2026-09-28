@@ -139,7 +139,7 @@ function LucidLayout() {
 
 function MinecraftLayout() {
   const location = useLocation();
-  const [settings, setSettings] = useState<BearSettings>(() => loadBearSettings(MINECRAFT_STORAGE_KEY, { dim: 70 }));
+  const [settings, setSettings] = useState<BearSettings>(() => loadBearSettings(MINECRAFT_STORAGE_KEY, { dim: 70, speed: 2.0, hitForce: 1.0 }));
   const { session } = useAuth();
   const signedIn = isSignedInSession(session);
   return (

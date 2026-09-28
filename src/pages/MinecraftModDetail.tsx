@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import type { Issue } from "../types";
-import { createIssue, deleteIssue, fetchAllPublicIssues, fetchIssuesByMod, updateIssueStatus } from "../lib/data";
+import type { Issue, Mod } from "../types";
+import { createIssue, deleteIssue, fetchMinecraftIssues, fetchIssuesByMod, updateIssueStatus } from "../lib/data";
 import { compareGameVersions, fetchMcModDetail, htmlToText, mcModId, type McMod, type McVersion } from "../lib/minecraft";
 import { centerAfterRender } from "../lib/centerScroll";
 import { formatDateTime } from "../lib/formatDate";
@@ -35,7 +35,7 @@ export default function MinecraftModDetail() {
     if (!slug) return;
     setLoading(true);
     setError(null);
-    Promise.all([fetchMcModDetail(slug), fetchIssuesByMod(mcModId(slug)).catch(() => [] as Issue[]), fetchAllPublicIssues().catch(() => [] as Issue[])])
+    Promise.all([fetchMcModDetail(slug), fetchIssuesByMod(mcModId(slug)).catch(() => [] as Issue[]), fetchMinecraftIssues().catch(() => [] as Issue[])])
       .then(([detail, modIssues, allIssues]) => {
         setMod(detail.mod);
         setVersions(detail.versions);
@@ -98,7 +98,7 @@ export default function MinecraftModDetail() {
         <p className="mc-version-list">MC {allGames.join(", ")}</p>
       )}
       {mod.longDescription.trim() && (
-        <div className="mod-description"><MarkdownText text={htmlToText(mod.longDescription)} issues={referenceIssues} mods={[]} /></div>
+        <div className="mod-description"><MarkdownText text={htmlToText(mod.longDescription)} issues={referenceIssues} mods={mod ? [{ id: modId, name: mod.title } as Mod] : []} /></div>
       )}
 
       <section>
@@ -134,9 +134,9 @@ export default function MinecraftModDetail() {
               <div className="version-body">
                 <div className="changelog">
                   {v.changelog ? (
-                    <MarkdownText text={v.changelog} issues={referenceIssues} mods={[]} />
+                    <MarkdownText text={v.changelog} issues={referenceIssues} mods={mod ? [{ id: modId, name: mod.title } as Mod] : []} />
                   ) : (
-                    <MarkdownText text={v.name} issues={referenceIssues} mods={[]} />
+                    <MarkdownText text={v.name} issues={referenceIssues} mods={mod ? [{ id: modId, name: mod.title } as Mod] : []} />
                   )}
                 </div>
                 <a className="btn btn-accent btn-sm download-btn" href={v.url} target="_blank" rel="noreferrer">
@@ -162,7 +162,7 @@ export default function MinecraftModDetail() {
         </div>
         {showIssueForm && (
           <div ref={issueFormRef}>
-            <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={[]} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: modId, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
+            <IssueForm initialType="bug" allowTypeChoice referenceIssues={referenceIssues} referenceMods={mod ? [{ id: modId, name: mod.title } as Mod] : []} onSubmit={async (title, desc, author, type, attachments) => { const pendingIssue = await createIssue({ mod_id: modId, type, title, description: desc, author_name: author, attachments }); setIssues((items) => [pendingIssue, ...items]); setShowIssueForm(false); }} />
           </div>
         )}
         <IssueList issues={visibleIssues} issueBasePath={`/minecraft/mods/${slug}/issues`} emptyMessage={issueTab === "open" ? "No open issues for this mod." : "No solved issues yet."} isAdmin={isStaff} onStatusChange={async (id, status) => { await updateIssueStatus(id, status); const refreshed = await fetchIssuesByMod(modId); setIssues(refreshed); }} onDelete={async (id) => { await deleteIssue(id); const refreshed = await fetchIssuesByMod(modId); setIssues(refreshed); }} onEdit={async () => { const refreshed = await fetchIssuesByMod(modId); setIssues(refreshed); }} />

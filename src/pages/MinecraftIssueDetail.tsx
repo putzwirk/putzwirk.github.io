@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Issue, IssueComment, IssueEvent, IssueState } from "../types";
-import { createComment, deleteIssue, fetchAllPublicIssues, fetchComments, fetchIssueById, fetchIssueEvents, fetchMyVotes, subscribeToIssue, toggleVote, updateIssueState } from "../lib/data";
+import { createComment, deleteIssue, fetchMinecraftIssues, fetchComments, fetchIssueById, fetchIssueEvents, fetchMyVotes, subscribeToIssue, toggleVote, updateIssueState } from "../lib/data";
 import { MC_IDEAS_MOD_ID, mcModId } from "../lib/minecraft";
 import { useAuth } from "../context/AuthContext";
 import MarkdownText from "../components/MarkdownText";
@@ -59,7 +59,7 @@ export default function MinecraftIssueDetail() {
   }, [issueId, load]);
 
   useEffect(() => {
-    fetchAllPublicIssues().then(setAllIssues).catch(() => undefined);
+    fetchMinecraftIssues().then(setAllIssues).catch(() => undefined);
     fetchMyVotes().then(setVotedIds).catch(() => undefined);
   }, []);
 

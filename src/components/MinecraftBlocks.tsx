@@ -4,14 +4,14 @@ import { bubbleBearConfig, supportsBubbleBearRenderer } from "../lib/bearConfig"
 const DEG = Math.PI / 180;
 const STEER = 0.6;
 const FLING_CAP_MULT = 10;
-const SQUASH_SPRING = 260;
-const SQUASH_DAMP = 7;
-const SQUASH_MAX = 0.14;
 const MAX_BLOCKS = 60;
 const OFFSCREEN = 90;
 const DESPAWN = 170;
 const GRAB_SMOOTH = 22;
 const SHATTER_FLASH_MS = 140;
+const MAX_PARTICLES = 360;
+const PARTICLE_GRAVITY = 1100;
+const PARTICLE_THRESHOLD = 150;
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const clamp = (value: number, min: number, max: number) => (value < min ? min : value > max ? max : value);
@@ -50,6 +50,7 @@ const TOTAL_WEIGHT = DEFS.reduce((sum, def) => sum + def.phys.weight, 0);
 interface Species {
   def: BlockDef;
   image: ImageBitmap;
+  palette: string[];
 }
 
 interface Block {
@@ -67,12 +68,43 @@ interface Block {
   mass: number;
   radius: number;
   half: number;
-  sq: number;
-  sqv: number;
   shatterUntil: number;
   vis: boolean;
   svx?: number;
   svy?: number;
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  color: string;
+}
+
+const particles: Particle[] = [];
+
+function spawnBurst(x: number, y: number, nx: number, ny: number, palettes: string[][], count: number, spread: number) {
+  const base = Math.atan2(ny, nx);
+  for (let i = 0; i < count; i += 1) {
+    if (particles.length >= MAX_PARTICLES) return;
+    const palette = palettes[(Math.random() * palettes.length) | 0];
+    if (!palette || palette.length === 0) continue;
+    const ang = base + rand(-spread, spread);
+    const speed = rand(60, 300) * unit;
+    const life = rand(0.35, 0.8);
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * speed,
+      vy: Math.sin(ang) * speed - 60 * unit,
+      life, maxLife: life,
+      size: rand(2, 4.5) * unit,
+      color: palette[(Math.random() * palette.length) | 0],
+    });
+  }
 }
 
 let unit = 1;
@@ -124,8 +156,6 @@ function respawn(block: Block, w: number, h: number, all: Species[], off: number
   block.mass = phys.mass * block.scale * block.scale;
   block.half = ((species.def.size * block.scale) / 2) * unit;
   block.radius = block.half * 1.42;
-  block.sq = 0;
-  block.sqv = 0;
   block.shatterUntil = 0;
   placeSpawn(block, w, h, off);
   const dx = block.tx - block.x;
@@ -259,15 +289,21 @@ function collide(a: Block, b: Block, hitForce: number, now: number) {
       block.vy *= k;
     }
   }
-  const impact = (push / Math.min(a.half, b.half)) * 0.5 + closing * 0.00012;
-  if (impact > 0) {
-    if (impact * (invA / invSum) * 2 > a.sq) a.sq = Math.min(SQUASH_MAX, impact * (invA / invSum) * 2 * SQUASH_MAX * 8);
-    if (impact * (invB / invSum) * 2 > b.sq) b.sq = Math.min(SQUASH_MAX, impact * (invB / invSum) * 2 * SQUASH_MAX * 8);
+  if (closing > PARTICLE_THRESHOLD && particles.length < MAX_PARTICLES) {
+    spawnBurst(
+      (a.x + b.x) / 2,
+      (a.y + b.y) / 2,
+      nx, ny,
+      [a.sp.palette, b.sp.palette],
+      Math.min(14, 4 + ((closing / 120) | 0)),
+      1.1,
+    );
   }
   for (const block of [a, b]) {
     const fragile = block.sp.def.phys.fragile;
     if (fragile > 0 && closing * hitForce > fragile && block !== grabbed) {
       block.shatterUntil = now + SHATTER_FLASH_MS;
+      spawnBurst(block.x, block.y, nx, ny, [block.sp.palette], 18, Math.PI);
     }
   }
 }
@@ -276,6 +312,31 @@ async function loadBitmap(src: string): Promise<ImageBitmap> {
   const res = await fetch(src);
   const blob = await res.blob();
   return createImageBitmap(blob, { colorSpaceConversion: "none" });
+}
+
+function samplePalette(image: ImageBitmap): string[] {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 8;
+    c.height = 8;
+    const g = c.getContext("2d", { willReadFrequently: true });
+    if (!g) return ["#888888"];
+    g.drawImage(image, 0, 0, 8, 8);
+    const data = g.getImageData(0, 0, 8, 8).data;
+    const buckets = new Map<number, number>();
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 128) continue;
+      const key = ((data[i] >> 5) << 10) | ((data[i + 1] >> 5) << 5) | (data[i + 2] >> 5);
+      buckets.set(key, (buckets.get(key) ?? 0) + 1);
+    }
+    const colors = [...buckets.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 5)
+      .map(([key]) => `rgb(${((key >> 10) & 31) * 8 + 4},${((key >> 5) & 31) * 8 + 4},${(key & 31) * 8 + 4})`);
+    return colors.length > 0 ? colors : ["#888888"];
+  } catch {
+    return ["#888888"];
+  }
 }
 
 function pickBlock(blocks: Block[], wx: number, wy: number): Block | null {
@@ -323,9 +384,11 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
     let prevGrabY = 0;
     let quality = 1;
     let slowFrames = 0;
-    const baseDpr = Math.min(window.devicePixelRatio || 1, bubbleBearConfig.dprCap);
-    unit = baseDpr;
-    dpr = baseDpr;
+    const updateDpr = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, bubbleBearConfig.dprCap) * quality;
+      unit = dpr;
+    };
+    updateDpr();
 
     const isInteractive = (node: EventTarget | null) => {
       const el = node as Element | null;
@@ -364,8 +427,6 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
         blocks.splice(idx, 1);
         blocks.push(block);
       }
-      block.sq = 0;
-      block.sqv = 0;
       pointerX = e.clientX * dpr;
       pointerY = e.clientY * dpr;
       pointerTargetX = pointerX;
@@ -388,13 +449,13 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
     };
 
     const resize = () => {
-      const header = document.querySelector<HTMLElement>(".site-header");
-      const footer = document.querySelector<HTMLElement>(".site-footer");
-      void header;
-      void footer;
+      updateDpr();
       const w = Math.max(1, Math.round(window.innerWidth * dpr));
       const h = Math.max(1, Math.round(window.innerHeight * dpr));
-      if (w === cssW && h === cssH) return;
+      if (w === cssW && h === cssH) {
+        for (const block of blocks) applyUnit(block);
+        return;
+      }
       cssW = w;
       cssH = h;
       canvas.width = w;
@@ -449,11 +510,6 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
           block.angle += block.av * dt;
           block.av *= 1 - 0.4 * dt;
         }
-        block.sqv -= block.sq * SQUASH_SPRING * dt;
-        block.sqv *= Math.max(0, 1 - SQUASH_DAMP * dt);
-        block.sq += block.sqv * dt;
-        if (block.sq > SQUASH_MAX) block.sq = SQUASH_MAX;
-        else if (block.sq < -SQUASH_MAX) block.sq = -SQUASH_MAX;
         if (block.shatterUntil > 0 && now >= block.shatterUntil) {
           if (block !== grabbed) respawn(block, cssW, cssH, species, off);
         }
@@ -492,18 +548,34 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
           ctx.restore();
           continue;
         }
-        const sx = (1 + block.sq) * block.scale * unit;
-        const sy = (1 - block.sq) * block.scale * unit;
+        const s = block.scale * unit;
         ctx.setTransform(
-          sx * Math.cos(block.angle * DEG),
-          sx * Math.sin(block.angle * DEG),
-          -sy * Math.sin(block.angle * DEG),
-          sy * Math.cos(block.angle * DEG),
+          s * Math.cos(block.angle * DEG),
+          s * Math.sin(block.angle * DEG),
+          -s * Math.sin(block.angle * DEG),
+          s * Math.cos(block.angle * DEG),
           block.x,
           block.y,
         );
         ctx.drawImage(block.sp.image, -block.sp.def.size / 2, -block.sp.def.size / 2, block.sp.def.size, block.sp.def.size);
       }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      for (let i = particles.length - 1; i >= 0; i -= 1) {
+        const p = particles[i];
+        p.vy += PARTICLE_GRAVITY * unit * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        if (p.life <= 0) {
+          particles[i] = particles[particles.length - 1];
+          particles.pop();
+          continue;
+        }
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       if (dt > 0.024) slowFrames += 1;
@@ -511,8 +583,7 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
       if (slowFrames > 90 && quality > 0.5) {
         quality = 0.5;
         slowFrames = 0;
-        dpr = baseDpr * quality;
-        unit = dpr;
+        updateDpr();
         resize();
         for (const block of blocks) applyUnit(block);
       }
@@ -521,7 +592,10 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
     };
 
     let alive = true;
-    Promise.all(DEFS.map(async (def) => ({ def, image: await loadBitmap(def.src) })))
+    Promise.all(DEFS.map(async (def) => {
+      const image = await loadBitmap(def.src);
+      return { def, image, palette: samplePalette(image) };
+    }))
       .then((loaded) => {
         if (!alive || disposed) {
           for (const s of loaded) s.image.close();
@@ -536,7 +610,7 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
           const block: Block = {
             sp, x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0, cruise: 0,
             angle: 0, av: 0, scale: 1, mass: 1, radius: 0, half: 0,
-            sq: 0, sqv: 0, shatterUntil: 0, vis: true,
+            shatterUntil: 0, vis: true,
           };
           respawn(block, cssW || window.innerWidth * dpr, cssH || window.innerHeight * dpr, species, OFFSCREEN * dpr);
           block.x = rand(0, cssW);
@@ -559,8 +633,6 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
         for (const block of blocks) {
           block.vx = block.svx ?? 0;
           block.vy = block.svy ?? 0;
-          block.sq = 0;
-          block.sqv = 0;
         }
         window.addEventListener("pointerdown", onPointerDown);
         window.addEventListener("pointermove", onHover);
@@ -576,6 +648,7 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
       alive = false;
       disposed = true;
       cancelAnimationFrame(raf);
+      particles.length = 0;
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onHover);
       window.removeEventListener("resize", resize);

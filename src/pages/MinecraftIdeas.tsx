@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Issue } from "../types";
-import { fetchMinecraftIdeas, fetchAllPublicIssues, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent } from "../lib/data";
+import { fetchMinecraftIdeas, fetchMinecraftIssues, createIssue, toggleVote, fetchMyVotes, updateIssueStatus, deleteIssue, softDeleteIssue, updateIssueContent } from "../lib/data";
 import { MC_IDEAS_MOD_ID } from "../lib/minecraft";
 import { useAuth } from "../context/AuthContext";
 import IssueForm from "../components/IssueForm";
@@ -50,7 +50,7 @@ export default function MinecraftIdeas() {
 
   const loadIdeas = () => {
     setLoading(true);
-    Promise.all([fetchMinecraftIdeas(), fetchAllPublicIssues().catch(() => [] as Issue[])])
+    Promise.all([fetchMinecraftIdeas(), fetchMinecraftIssues().catch(() => [] as Issue[])])
       .then(([fetchedIdeas, allIssues]) => {
         setIdeas(fetchedIdeas);
         setMentionIssues(allIssues);
