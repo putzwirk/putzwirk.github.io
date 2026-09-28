@@ -1,0 +1,887 @@
+{
+ "scrapedAt": "2026-09-28T11:03:32.279Z",
+ "projects": {
+  "artifacts-merging": {
+   "files": {
+    "7589097": {
+     "changelog": null
+    },
+    "7591019": {
+     "changelog": "<p>Fixed Shift-click crafting don't getting actual random artifact</p>\n"
+    },
+    "7591021": {
+     "changelog": "<p>Fixed Shift-click crafting don't getting actual random artifact</p>\n"
+    },
+    "7758213": {
+     "changelog": "<p>Forge native port.</p>\n"
+    },
+    "7760217": {
+     "changelog": "<p>Added Relics optional compat.</p>\n"
+    },
+    "7760721": {
+     "changelog": "<p>Neoforge port.</p>\n"
+    },
+    "8388247": {
+     "changelog": "<p>Artifacts that are disabled in the config from loot generation&nbsp;can't be merging result now.</p>"
+    },
+    "8950152": {
+     "name": "artifactsmerging-fabric-1.19.2-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor\nAdded very modular configuration for creating merging lists.</p>\n"
+    },
+    "8950157": {
+     "name": "artifactsmerging-forge-1.19.2-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Forge",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950161": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950164": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950165": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950168": {
+     "name": "artifactsmerging-forge-1.20.4-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.4",
+     "loaderHint": "Forge",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950169": {
+     "name": "artifactsmerging-fabric-1.20.6-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.6",
+     "loaderHint": "Fabric",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950173": {
+     "name": "artifactsmerging-forge-1.20.6-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.6",
+     "loaderHint": "Forge",
+     "dateHint": "Sep 22, 2026",
+     "changelog": null
+    },
+    "8950175": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950177": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950179": {
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950181": {
+     "name": "artifactsmerging-neoforge-1.21.10-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.10",
+     "loaderHint": "NeoForge",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950183": {
+     "name": "artifactsmerging-fabric-1.21.11-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.11",
+     "loaderHint": "Fabric",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    },
+    "8950189": {
+     "name": "artifactsmerging-neoforge-1.21.11-1.2.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.11",
+     "loaderHint": "NeoForge",
+     "dateHint": "Sep 22, 2026",
+     "changelog": "<p>Multiloader refactor<br>Added very modular configuration for creating merging lists.&nbsp;</p>"
+    }
+   },
+   "title": "Artifacts Merging",
+   "summary": "Combine two artifacts into one random one!",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1666/234/256/256/639060700323376399.png",
+   "downloadsTotal": null
+  },
+  "better-flames": {
+   "files": {
+    "8500298": {
+     "name": "betterflames-fabric-1.21.1-1.0.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jul 24, 2026",
+     "changelog": "<p>Initial release.</p>"
+    },
+    "8500430": {
+     "name": "betterflames-neoforge-1.21.1-1.0.0.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "NeoForge",
+     "dateHint": "Jul 24, 2026",
+     "changelog": null
+    },
+    "8785853": {
+     "name": "betterflames-fabric-26.2-1.0.0.jar",
+     "releaseType": "R",
+     "gameHint": "26.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Sep 1, 2026",
+     "changelog": null
+    },
+    "8785854": {
+     "name": "betterflames-neoforge-26.2-1.0.0.jar",
+     "releaseType": "R",
+     "gameHint": "26.2",
+     "loaderHint": "NeoForge",
+     "dateHint": "Sep 1, 2026",
+     "changelog": null
+    }
+   },
+   "title": "Better Flames",
+   "summary": "Reduces the flame texture size on burning arrows and mobs.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1940/345/256/256/639205004520490688.png",
+   "downloadsTotal": null
+  },
+  "boundlessblocks": {
+   "files": {
+    "7479647": {
+     "changelog": "<p>Stable version.</p>\n"
+    },
+    "7479657": {
+     "changelog": "<p>Stable version</p>"
+    },
+    "7479678": {
+     "changelog": "<p>Stable release.</p>"
+    },
+    "7479685": {
+     "name": "boundless_blocks-1.0.3+1.20.4.jar",
+     "releaseType": "B",
+     "gameHint": "1.20.4",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": "<p>Stable version.</p>"
+    },
+    "7479689": {
+     "name": "boundless_blocks-1.0.3+1.20.5.jar",
+     "releaseType": "B",
+     "gameHint": "1.20.5",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": "<p>Stable version.</p>"
+    },
+    "7479695": {
+     "name": "boundless_blocks-1.0.3+1.20.6.jar",
+     "releaseType": "B",
+     "gameHint": "1.20.6",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": "<p>Bugged port:</p>\n<p>- Mod menu support doesn't work.</p>\n<p>- Breaked infinite blocks tooltips (displayed as normal blocks)</p>\n<p>&nbsp;</p>\n<p>Everyhting else is fine.</p>\n<div></div>"
+    },
+    "7581650": {
+     "name": "boundless-blocks-1.1.0+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 5, 2026",
+     "changelog": "<p>Complete code refactoring, some bugfixes. WARNING: Old infinite blocks will be deleted from the world if migrating from the previous version!!!</p>\n"
+    },
+    "7582891": {
+     "name": "boundless-blocks-1.1.0+1.19.2.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 6, 2026",
+     "changelog": "<p>Complete code refactoring, some bugfixes. WARNING: Old infinite blocks will be deleted from the world if migrating from the previous version!!!</p>\n"
+    },
+    "7582893": {
+     "changelog": "<p>Complete code refactoring, some bugfixes. WARNING: Old infinite blocks will be deleted from the world if migrating from the previous version!!!</p>\n"
+    },
+    "8792598": {
+     "name": "boundless-blocks-1.2.0+1.21.10.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.10",
+     "loaderHint": "Fabric",
+     "dateHint": "Sep 2, 2026",
+     "changelog": null
+    }
+   },
+   "title": "Boundless Blocks",
+   "summary": "Craft infinite building blocks from any mod. Never run out of materials again!",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1623/252/256/256/639043239982174685.png",
+   "downloadsTotal": null
+  },
+  "eating-pace": {
+   "files": {
+    "7501735": {
+     "changelog": null
+    },
+    "7505025": {
+     "changelog": "<p>Added Cloth config &amp; mod menu configuration. Made server-client config sync (bug fix).</p>"
+    },
+    "7577366": {
+     "changelog": "<p>Completely rewrited</p>\n"
+    },
+    "7577369": {
+     "changelog": "<p>Completely rewrited</p>\n"
+    },
+    "7580595": {
+     "name": "eating-pace-1.1.0+1.19.2.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 5, 2026",
+     "changelog": "<p>Port.</p>\n"
+    },
+    "7593195": {
+     "changelog": "<p>Massive configuration update! Added all modded foods support!</p>\n"
+    },
+    "7593197": {
+     "changelog": "<p>Massive configuration update! Added all modded foods support!</p>\n"
+    },
+    "7593677": {
+     "changelog": "<p>Bugfix - globalSaturation &amp; hunger multipliers not affected vanilla foods.</p>\n"
+    },
+    "7593680": {
+     "changelog": "<p>Bugfix - globalSaturation &amp; hunger multipliers not affected vanilla foods.</p>\n"
+    },
+    "7593889": {
+     "changelog": "<p>Made modmenu config less restrictive</p>\n"
+    },
+    "7593891": {
+     "changelog": "<p>Made modmenu config less restrictive</p>\n"
+    },
+    "7638233": {
+     "name": "eating-pace-2.1.0+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 17, 2026",
+     "changelog": "<p>Bug and balance fixes\nArtifacts novelty hat compat added</p>\n"
+    },
+    "7638236": {
+     "changelog": "<p>Bug and balance fixes\nArtifacts novelty hat compat added</p>\n"
+    },
+    "7642675": {
+     "name": "eating-pace-2.1.1+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 18, 2026",
+     "changelog": "<p>Fixed progress bar color to be green same as in 1.20.1</p>\n"
+    }
+   },
+   "title": "Eating Pace",
+   "summary": "The Vanilla+ eating overhaul mod, which divides food into quick snacks for combat and high-saturation meals.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1632/539/256/256/639046125740820728.png",
+   "downloadsTotal": null
+  },
+  "fabricated-difficulty": {
+   "files": {
+    "7585937": {
+     "changelog": null
+    },
+    "7598343": {
+     "name": "adaptive-difficulty-1.0.3+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 9, 2026",
+     "changelog": "<p>Fixed difficulty reset on relogin\nNow only admins can change difficulty for players</p>\n"
+    },
+    "7598345": {
+     "name": "adaptive-difficulty-1.0.3+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 9, 2026",
+     "changelog": "<p>Fixed difficulty reset on relogin\nNow only admins can change difficulty for players</p>\n"
+    }
+   },
+   "title": "Fabricated Difficulty",
+   "summary": "Fabric port of adaptive difficulty mod made by Spiderman31807 + my enhancements. Allows players to pick their individual difficulty.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1665/5/256/256/639060058243409494.png",
+   "downloadsTotal": null
+  },
+  "feeding-indicators": {
+   "files": {
+    "7634920": {
+     "changelog": null
+    },
+    "7635011": {
+     "changelog": null
+    },
+    "7642999": {
+     "name": "feedingindicators-1.1.0+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 18, 2026",
+     "changelog": "<p>Instant indicators hiding on feed.</p>\n"
+    },
+    "7643000": {
+     "name": "feedingindicators-1.1.0+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Feb 18, 2026",
+     "changelog": "<p>Instant indicators hiding on feed.</p>\n"
+    }
+   },
+   "title": "Feeding Indicators",
+   "summary": "See what any animal eats and when they're ready to breed or be tamed with helpful floating item indicators.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1681/916/256/256/639068630622653392.png",
+   "downloadsTotal": null
+  },
+  "fogrule": {
+   "files": {
+    "8574328": {
+     "name": "fogrule-1.0.2.jar",
+     "releaseType": "A",
+     "gameHint": "1.21.1",
+     "loaderHint": "NeoForge",
+     "dateHint": "Aug 4, 2026",
+     "changelog": "<p>Fixing dungeon levers dont turning off in unloaded chunks\nOP players don't see fog now, configurable</p>\n"
+    }
+   },
+   "title": "FogRule",
+   "summary": "Adds dense fog to the game where monsters spawn. Building clears fog. Intended for long-term worlds to motivate building;)",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1922/986/256/256/639197840292665753.jpg",
+   "downloadsTotal": null
+  },
+  "greedy-gold": {
+   "files": {
+    "7491692": {
+     "changelog": null
+    },
+    "7494728": {
+     "changelog": "<p>Massive fixes and new configuration.</p>\n"
+    },
+    "7495079": {
+     "changelog": null
+    },
+    "7502155": {
+     "changelog": "<p>Critical bugfix</p>\n"
+    },
+    "7502186": {
+     "changelog": "<p>Critical fix</p>\n"
+    },
+    "7596621": {
+     "changelog": "<p>Bug fixes.</p>\n"
+    },
+    "7596625": {
+     "changelog": "<p>Bug fixes.</p>\n"
+    },
+    "7694734": {
+     "changelog": "<ul>\n<li>Fixed: other golden things be able to mine ores, not only a pickaxe</li>\n<li>Fixed: incorrect enchantment logics (removed ability to make conflicting enchantments on same tool/armor)</li>\n</ul>\n"
+    },
+    "7694736": {
+     "changelog": "<ul>\n<li>Fixed: other golden things be able to mine ores, not only a pickaxe</li>\n<li>Fixed: incorrect enchantment logics (removed ability to make conflicting enchantments on same tool/armor)</li>\n</ul>\n"
+    },
+    "7699769": {
+     "changelog": "<p>Fixed Sinytra Connector forge bugs - tools regeneration and durability.</p>\n"
+    },
+    "7699771": {
+     "changelog": "<p>Fixed Sinytra Connector forge bugs - tools regeneration and durability.</p>\n"
+    },
+    "7755434": {
+     "changelog": "<p>Forge native port. Config can be changed only in json currently.</p>\n"
+    }
+   },
+   "title": "Greedy Gold",
+   "summary": "Golden tools and armor regenerate durability and upgrade through use.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1630/56/256/256/639045208139701107.png",
+   "downloadsTotal": null
+  },
+  "hoardlocator": {
+   "files": {
+    "8753416": {
+     "changelog": null
+    },
+    "8754603": {
+     "changelog": "<p>Added english and russian translations of the item.</p>"
+    },
+    "8767988": {
+     "changelog": "<p>Translations fix</p>"
+    },
+    "8772840": {
+     "changelog": "<p>Added optional cloth config</p>\n"
+    }
+   },
+   "title": "HoardLocator",
+   "summary": "Item for searching non-empty chests or barrels, made for adventure map-making purposes.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/2012/142/256/256/639235129374212005.png",
+   "downloadsTotal": null
+  },
+  "hostile-climbers": {
+   "files": {
+    "7637893": {
+     "changelog": null
+    },
+    "7637898": {
+     "changelog": null
+    },
+    "7642926": {
+     "changelog": "<p>Added config and refined logics</p>\n"
+    },
+    "7642927": {
+     "changelog": "<p>Added config and refined logics</p>\n"
+    }
+   },
+   "title": "Hostile Climbers",
+   "summary": "Allows other enemy mobs to climb walls just like spiders.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1682/926/256/256/639069165372589435.png",
+   "downloadsTotal": null
+  },
+  "inmisinvman-compat": {
+   "files": {
+    "7479758": {
+     "name": "inmisinvman-compat-1.0.0+1.19.jar",
+     "releaseType": "R",
+     "gameHint": "1.19",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": null
+    },
+    "7479760": {
+     "name": "inmisinvman-compat-1.0.0+1.19.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": null
+    },
+    "7479762": {
+     "name": "inmisinvman-compat-1.0.0+1.19.2.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": null
+    },
+    "7479764": {
+     "name": "inmisinvman-compat-1.0.0+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": null
+    },
+    "7479767": {
+     "name": "inmisinvman-compat-1.0.0+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 18, 2026",
+     "changelog": "<h2>WARNING:</h2>\n<p>Inventory management mod for fabric 1.21.1 is not available on curseforge! Download it on <a href=\"/linkout?remoteUrl=https%253a%252f%252fmodrinth.com%252fmod%252finventory-management%252fversion%252f1.6.0%2b1.21\" rel=\"nofollow\">Modrinth</a></p>\n"
+    }
+   },
+   "title": "Inmis InventoryManagement Compat",
+   "summary": "Compatibility layer between Inmis backpacks and Inventory Management mods.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1623/308/256/256/639043262121200925.png",
+   "downloadsTotal": null
+  },
+  "looping-world": {
+   "files": {
+    "7518393": {
+     "changelog": null
+    },
+    "7518505": {
+     "changelog": null
+    },
+    "7518954": {
+     "changelog": null
+    }
+   },
+   "title": "Looping World",
+   "summary": "A Fabric mod that turns the world border into seamless wrap-around teleportation instead of a wall.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1638/937/256/256/639048636530947258.png",
+   "downloadsTotal": null
+  },
+  "mapmakerblocks": {
+   "files": {
+    "8828776": {
+     "changelog": "<p>Initial release.</p>\n"
+    }
+   },
+   "title": "MapMakerBlocks",
+   "summary": "Adds several useful blocks for map developers",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/2032/527/256/256/639243680541595619.png",
+   "downloadsTotal": null
+  },
+  "mapmakermusic": {
+   "files": {
+    "8752871": {
+     "changelog": "<p>Initial working release.</p>"
+    },
+    "8769117": {
+     "changelog": "<ul>\n<li><p>Added player selection in /playmusic and /playsound commands to apply audio per-player. Nice addition for multiplayer maps.</p>\n</li>\n<li><p>Made audio persistent through world relogin or by reloading resources.</p>\n</li>\n<li><p>Added found tracks autocompletion in commands.</p>\n</li>\n</ul>\n"
+    },
+    "8771085": {
+     "changelog": "<p>Music persistence bugfixes.</p>"
+    },
+    "8771104": {
+     "changelog": "<p>Forge port with up-to-date 1.1.1 features.</p>"
+    },
+    "8830583": {
+     "changelog": "<p>Fixed fading &amp; music behavior in multiple worlds of the instance</p>\n"
+    },
+    "8830586": {
+     "changelog": "<p>Fixed fading &amp; music behavior in multiple worlds of the instance</p>"
+    },
+    "8940792": {
+     "changelog": "<p>Added ability to play positional sounds if providing coordinates\nAdded ability to change pitch of the sounds</p>\n"
+    },
+    "8940794": {
+     "changelog": "<p>Added ability to play positional sounds if providing coordinates<br>Added ability to change pitch of the sounds</p>"
+    },
+    "8946227": {
+     "changelog": "<p>Added new functional block: Audiobox.\nBreaking blocks with audiobox in hand will set pos1/pos2 for area box (similar to worldedit's axe functionality)</p>"
+    },
+    "8946228": {
+     "changelog": "<p>Added new functional block: Audiobox.<br>Breaking blocks with audiobox in hand will set pos1/pos2 for area box (similar to worldedit's axe functionality)</p>"
+    },
+    "8952605": {
+     "changelog": "<ul>\n<li>Fixed audiobox GUI not opening on the server</li>\n<li>Fixed - individual music for each player in the area</li>\n<li>Fixed - music starts not from the beginning when entering area</li>\n<li>Added authoritative server music sending to clients.</li>\n</ul>\n"
+    },
+    "8952606": {
+     "changelog": "<p>- Fixed audiobox GUI not opening on the server<br>- Fixed - individual music for each player in the area<br>- Fixed - music starts not from the beginning when entering area<br>- Added authoritative server music sending to clients.&nbsp;</p>"
+    },
+    "8998603": {
+     "changelog": "<ul>\n<li>Added queues and playlists</li>\n<li>Added nested conditions with ALL/ANY if/else functionality - built in on command blocks /execute etc commands.</li>\n<li>Audioboxes require operator now to use (because players can give resources when using condition commands)</li>\n<li>Various bugfixes with fading, persistency</li>\n<li>Introduced new priority field for audioboxes</li>\n</ul>\n"
+    },
+    "8998605": {
+     "changelog": "<ul>\n<li>Added queues and playlists</li>\n<li>Added nested conditions with ALL/ANY if/else functionality - built in on command blocks /execute etc commands.</li>\n<li>Audioboxes require operator now to use (because players can give resources when using condition commands)</li>\n<li>Various bugfixes with fading, persistency</li>\n<li>Introduced new priority field for audioboxes</li>\n</ul>\n"
+    }
+   },
+   "title": "MapMakerMusic",
+   "summary": "A very simple solution for playing custom music and sounds, designed for adventure map developers",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/2011/999/256/256/639235058796148757.png",
+   "downloadsTotal": null
+  },
+  "per-player-random-respawn": {
+   "files": {
+    "7574629": {
+     "changelog": null
+    },
+    "7574630": {
+     "changelog": null
+    },
+    "7574631": {
+     "changelog": null
+    },
+    "7575171": {
+     "changelog": null
+    },
+    "7575173": {
+     "changelog": null
+    },
+    "7575175": {
+     "changelog": null
+    },
+    "7583343": {
+     "changelog": "<p>Teleporation optimizations &amp; bugfixes</p>\n"
+    },
+    "7583345": {
+     "changelog": "<p>Teleporation optimizations &amp; bugfixes</p>\n"
+    },
+    "7583346": {
+     "changelog": "<p>Teleporation optimizations &amp; bugfixes</p>\n"
+    },
+    "7606384": {
+     "changelog": "<p>World time sets to morning\nOptimizations\nMaintainable version.</p>\n"
+    },
+    "8954428": {
+     "changelog": "<p>Fixed invulnerability bug when rejoining world after death\nOptimized performance and made time set day command on player respawn to be configurable</p>\n"
+    },
+    "8954803": {
+     "changelog": "<p>Fixed invulnerability bug when rejoining world after death\nOptimized performance and made time set day command on player respawn to be configurable</p>\n"
+    },
+    "8954804": {
+     "changelog": "<p>Fixed invulnerability bug when rejoining world after death<br>Optimized performance and made time set day command on player respawn to be configurable</p>"
+    }
+   },
+   "title": "Per-Player Random Respawn",
+   "summary": "Server-side mod that allowing players to respawn in random undiscovered place after death. Can be enabled/disabled per-player.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1660/942/256/256/639057988564546362.png",
+   "downloadsTotal": null
+  },
+  "progressiveinventory": {
+   "files": {
+    "8380484": {
+     "changelog": null
+    },
+    "8392739": {
+     "changelog": "<p>Fixing crash when right-clicking stonecutter. Added language translations.</p>"
+    },
+    "8440299": {
+     "changelog": "<p>Added ability to pin slots so they will not be sorted when clicking TAB key. Press Alt+LMB on slot to pin it.</p>"
+    },
+    "8442481": {
+     "changelog": "<p>Bugfix: player invetory pins dissolved on player death.</p>\n"
+    }
+   },
+   "title": "ProgressiveInventory",
+   "summary": "Additional slots up to 54 that unlocking by completing achievements.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1904/124/256/256/639189321958837625.png",
+   "downloadsTotal": null
+  },
+  "rare-mending": {
+   "files": {
+    "7654083": {
+     "changelog": null
+    },
+    "7654084": {
+     "changelog": null
+    }
+   },
+   "title": "Rare Mending",
+   "summary": "Complicates and makes obtaining Mending more interesting: removes it from the villager trades and instead makes available through exploration.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1688/355/256/256/639072007551865826.png",
+   "downloadsTotal": null
+  },
+  "repair-station": {
+   "files": {
+    "7574764": {
+     "changelog": null
+    },
+    "7574778": {
+     "changelog": null
+    },
+    "7574779": {
+     "changelog": null
+    },
+    "7576655": {
+     "changelog": "<p>Added config, bugfixes</p>\n"
+    },
+    "7576657": {
+     "changelog": null
+    },
+    "7576670": {
+     "changelog": "<p>Added config, bugfixes\nImportant: config in mod menu dont working!</p>\n"
+    },
+    "7642644": {
+     "changelog": "<p>Added advancement for crafting book\nImportant: configuration in mod menu dont working!</p>\n"
+    },
+    "7642645": {
+     "changelog": "<p>Added advancement for crafting book</p>\n"
+    },
+    "7642647": {
+     "changelog": "<p>RECIPE FIX!\nAdded advancement for crafting book</p>\n"
+    },
+    "7686216": {
+     "changelog": "<p>Config doesnt work</p>\n"
+    },
+    "7686219": {
+     "changelog": "<p>Added compatibility with Sinytra Connector</p>\n"
+    },
+    "7686221": {
+     "changelog": "<p>Added compatibility with Sinytra Connector</p>\n"
+    },
+    "8841990": {
+     "changelog": "<p>Config fix, new config GUI style, multiloader migration.</p>"
+    },
+    "8841993": {
+     "changelog": "<p>new config GUI style, multiloader migration<br>Forge native port.</p>"
+    },
+    "8841996": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>"
+    },
+    "8841999": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>\n<p>Forge port</p>"
+    },
+    "8842001": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>"
+    },
+    "8842003": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>\n<p>NeoForge port</p>"
+    },
+    "8842007": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>"
+    },
+    "8842009": {
+     "changelog": "<p>new config GUI style, multiloader migration.</p>\n<p>NeoForge port</p>"
+    },
+    "8842141": {
+     "changelog": null
+    },
+    "8842143": {
+     "changelog": null
+    },
+    "8885455": {
+     "changelog": "<p>Fixed server crash</p>\n<p>Repair Station (repairstation) has failed to load correctly\njava.lang.RuntimeException: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER``</p>\n"
+    }
+   },
+   "title": "Repair Station",
+   "summary": "Adds a new repair station functional block: consumes flint - repairs tools/armor.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1660/991/256/256/639058017292701714.png",
+   "downloadsTotal": null
+  },
+  "sweat-to-fit": {
+   "files": {
+    "7628221": {
+     "changelog": null
+    },
+    "7647801": {
+     "changelog": "<p>Added config\nFixed bugs</p>\n"
+    },
+    "7650002": {
+     "changelog": "<p>Mining speed mixin conflict fix with other mods;\nWater breathing potion working now as expected;</p>\n"
+    }
+   },
+   "title": "Sweat to Fit",
+   "summary": "Real-life RPG stat system in minecraft. Start with a very weak character, but train and improve them over time and with effort!",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1679/561/256/256/639067537941880245.png",
+   "downloadsTotal": null
+  },
+  "trashslot-blacklist-addon": {
+   "files": {
+    "7547393": {
+     "changelog": null
+    },
+    "7547457": {
+     "changelog": "<p>Fixed inability to move trashslot.</p>\n"
+    },
+    "7598618": {
+     "changelog": "<p>Improved UI, bugfixes, added main switch.</p>\n"
+    },
+    "7598784": {
+     "changelog": "<p>Improved UI, bugfixes, added main switch. Port to 1.21.1</p>\n"
+    },
+    "7804242": {
+     "changelog": null
+    },
+    "7804778": {
+     "changelog": "<p>Fixed crash when opening curious menu.</p>\n"
+    },
+    "8492865": {
+     "changelog": null
+    },
+    "8493116": {
+     "changelog": "<p>Shifted profiles buttons to the left</p>\n<p>Fixed a bug with items being deleted in creative mode</p>\n"
+    },
+    "8506159": {
+     "changelog": "<p>Fixed a bug: unable to rename items on anvil with this mod.</p>"
+    },
+    "8792119": {
+     "changelog": "<p>Blacklist toggle button now renders below the hovered tooltip</p>"
+    },
+    "8792125": {
+     "changelog": "<p>Blacklist toggle button now renders below the hovered tooltip</p>"
+    },
+    "8792126": {
+     "changelog": "<p>Blacklist toggle button now renders below the hovered tooltip</p>"
+    },
+    "8792129": {
+     "changelog": "<p>Blacklist toggle button now renders below the hovered tooltip</p>"
+    },
+    "8842331": {
+     "changelog": "<p>Improved deleting by item types and optimized deleting logics.</p>"
+    },
+    "8842334": {
+     "changelog": "<p>Improved deleting by item types and optimized deleting logics.</p>"
+    },
+    "8842344": {
+     "changelog": "<p>Improved deleting by item types and optimized deleting logics.</p>"
+    },
+    "8842345": {
+     "changelog": "<p>Improved deleting by item types and optimized deleting logics.</p>"
+    },
+    "8842346": {
+     "changelog": "<p>Port</p>"
+    },
+    "8842348": {
+     "changelog": "<p>Port</p>"
+    }
+   },
+   "title": "TrashSlot Blacklist Addon",
+   "summary": "This mod adds blacklist functionality to the TrashSlot mod, allowing to autotrash useless items.",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1650/477/256/256/639053139859572003.png",
+   "downloadsTotal": null
+  },
+  "worldborder-core": {
+   "files": {
+    "7550858": {
+     "name": "worldborder-core-1.6.2+1.19.2.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 30, 2026",
+     "changelog": null
+    },
+    "7550859": {
+     "name": "worldborder-core-1.6.2+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 30, 2026",
+     "changelog": null
+    },
+    "7550869": {
+     "name": "worldborder-core-1.6.2+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 30, 2026",
+     "changelog": null
+    }
+   },
+   "title": "Worldborder Core",
+   "summary": "A mod that adds a world border core that requires resources to expand the border. Very cool!",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1644/266/256/256/639050472688934069.png",
+   "downloadsTotal": null
+  },
+  "worldborder-tweaks": {
+   "files": {
+    "7516723": {
+     "name": "bordertweaks-1.0.1+1.20.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.20.1",
+     "loaderHint": "Forge",
+     "dateHint": "Jan 24, 2026",
+     "changelog": null
+    },
+    "7517253": {
+     "name": "bordertweaks-1.0.1+1.19.2.jar",
+     "releaseType": "R",
+     "gameHint": "1.19.2",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 24, 2026",
+     "changelog": null
+    },
+    "7517256": {
+     "name": "bordertweaks-1.0.1+1.21.1.jar",
+     "releaseType": "R",
+     "gameHint": "1.21.1",
+     "loaderHint": "Fabric",
+     "dateHint": "Jan 24, 2026",
+     "changelog": null
+    }
+   },
+   "title": "Worldborder Tweaks",
+   "summary": "Client-side worldborder tweaks",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/1638/964/256/256/639048645277906375.png",
+   "downloadsTotal": null
+  },
+  "impasse": {
+   "files": {
+    "8768227": {
+     "changelog": null
+    }
+   },
+   "title": "Impasse",
+   "summary": "Surreal adventure map. Estimated duration: 1–2 hours. Enjoy!",
+   "avatar": "https://media.forgecdn.net/avatars/thumbnails/2016/381/256/256/639236806920650210.png",
+   "downloadsTotal": null
+  }
+ }
+}

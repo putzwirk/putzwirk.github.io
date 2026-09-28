@@ -1,0 +1,1 @@
+import{j as a}from"./react-5TPL3RWa.js";const e={fabric:"/loaders/fabric.png",forge:"/loaders/forge.png",neoforge:"/loaders/neoforge.png",quilt:"/loaders/fabric.png"};function n({loader:o}){const r=e[o.toLowerCase()]??null;return a.jsxs("span",{className:"chip",children:[r&&a.jsx("img",{className:"loader-icon",src:r,alt:"",width:14,height:14,loading:"lazy"}),o]})}export{n as L};
