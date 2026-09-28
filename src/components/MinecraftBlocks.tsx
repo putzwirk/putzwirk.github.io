@@ -71,6 +71,8 @@ interface Block {
   sqv: number;
   shatterUntil: number;
   vis: boolean;
+  svx?: number;
+  svy?: number;
 }
 
 let unit = 1;
@@ -138,22 +140,23 @@ function applyUnit(block: Block) {
   block.radius = block.half * 1.42;
 }
 
-const CORNERS = new Float64Array(8);
+const CORNERS_A = new Float64Array(8);
+const CORNERS_B = new Float64Array(8);
 
-function blockCorners(b: Block): Float64Array {
+function blockCorners(b: Block, out: Float64Array): Float64Array {
   const rad = b.angle * DEG;
   const cos = Math.cos(rad);
   const sin = Math.sin(rad);
   const h = b.half;
-  CORNERS[0] = b.x + (-h * cos + h * sin);
-  CORNERS[1] = b.y + (-h * sin - h * cos);
-  CORNERS[2] = b.x + (h * cos + h * sin);
-  CORNERS[3] = b.y + (h * sin - h * cos);
-  CORNERS[4] = b.x + (h * cos - h * sin);
-  CORNERS[5] = b.y + (h * sin + h * cos);
-  CORNERS[6] = b.x + (-h * cos - h * sin);
-  CORNERS[7] = b.y + (-h * sin + h * cos);
-  return CORNERS;
+  out[0] = b.x + (-h * cos + h * sin);
+  out[1] = b.y + (-h * sin - h * cos);
+  out[2] = b.x + (h * cos + h * sin);
+  out[3] = b.y + (h * sin - h * cos);
+  out[4] = b.x + (h * cos - h * sin);
+  out[5] = b.y + (h * sin + h * cos);
+  out[6] = b.x + (-h * cos - h * sin);
+  out[7] = b.y + (-h * sin + h * cos);
+  return out;
 }
 
 function projectRange(c: Float64Array, ax: number, ay: number): [number, number] {
@@ -173,8 +176,8 @@ function collide(a: Block, b: Block, hitForce: number, now: number) {
   const reach = a.radius + b.radius;
   const d2 = dx * dx + dy * dy;
   if (d2 >= reach * reach) return;
-  const ca = blockCorners(a);
-  const cb = blockCorners(b);
+  const ca = blockCorners(a, CORNERS_A);
+  const cb = blockCorners(b, CORNERS_B);
   const ra = a.angle * DEG;
   const rb = b.angle * DEG;
   const axes = [
@@ -227,8 +230,8 @@ function collide(a: Block, b: Block, hitForce: number, now: number) {
   const ty = nx;
   const vt = rvx * tx + rvy * ty;
   const mu = 0.25;
-  let jt = (-vt / invSum) * mu;
   const maxFriction = jn * mu;
+  let jt = -vt / invSum;
   if (jt > maxFriction) jt = maxFriction;
   else if (jt < -maxFriction) jt = -maxFriction;
   a.vx -= jt * tx * invA;
@@ -236,12 +239,12 @@ function collide(a: Block, b: Block, hitForce: number, now: number) {
   b.vx += jt * tx * invB;
   b.vy += jt * ty * invB;
   if (invA > 0 && a !== grabbed) {
-    a.av = clamp(a.av - ((jt * 1.5) / (a.mass * Math.max(1, a.half))) * 57.3, -160, 160);
+    a.av = clamp(a.av - ((jt * 0.6) / (a.mass * Math.max(1, a.half))) * 57.3, -160, 160);
   }
   if (invB > 0 && b !== grabbed) {
-    b.av = clamp(b.av + ((jt * 1.5) / (b.mass * Math.max(1, b.half))) * 57.3, -160, 160);
+    b.av = clamp(b.av + ((jt * 0.6) / (b.mass * Math.max(1, b.half))) * 57.3, -160, 160);
   }
-  const kick = (depth * 24 + closing * 1.4) * hitForce;
+  const kick = (depth * 8 + closing * 0.8) * hitForce;
   a.vx -= nx * kick * invA;
   a.vy -= ny * kick * invA;
   b.vx += nx * kick * invB;
@@ -539,6 +542,25 @@ export default function MinecraftBlocks({ dim = 0 }: { dim?: number }) {
           block.x = rand(0, cssW);
           block.y = rand(0, cssH);
           blocks.push(block);
+        }
+        for (const block of blocks) {
+          block.svx = block.vx;
+          block.svy = block.vy;
+          block.vx = 0;
+          block.vy = 0;
+        }
+        for (let k = 0; k < 24; k += 1) {
+          for (let i = 0; i < blocks.length; i += 1) {
+            for (let j = i + 1; j < blocks.length; j += 1) {
+              collide(blocks[i], blocks[j], 0, 0);
+            }
+          }
+        }
+        for (const block of blocks) {
+          block.vx = block.svx ?? 0;
+          block.vy = block.svy ?? 0;
+          block.sq = 0;
+          block.sqv = 0;
         }
         window.addEventListener("pointerdown", onPointerDown);
         window.addEventListener("pointermove", onHover);
