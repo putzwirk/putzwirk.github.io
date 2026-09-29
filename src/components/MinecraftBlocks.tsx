@@ -101,7 +101,7 @@ function spawnBurst(x: number, y: number, nx: number, ny: number, palettes: stri
       vx: Math.cos(ang) * speed,
       vy: Math.sin(ang) * speed - 60 * unit,
       life, maxLife: life,
-      size: rand(2, 4.5) * unit,
+      size: rand(4, 8) * unit,
       color: palette[(Math.random() * palette.length) | 0],
     });
   }
@@ -332,7 +332,7 @@ function samplePalette(image: ImageBitmap): string[] {
     const colors = [...buckets.entries()]
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5)
-      .map(([key]) => `rgb(${((key >> 10) & 31) * 8 + 4},${((key >> 5) & 31) * 8 + 4},${(key & 31) * 8 + 4})`);
+      .map(([key]) => `rgb(${((key >> 10) & 31) * 32 + 16},${((key >> 5) & 31) * 32 + 16},${(key & 31) * 32 + 16})`);
     return colors.length > 0 ? colors : ["#888888"];
   } catch {
     return ["#888888"];
